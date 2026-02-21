@@ -1,0 +1,120 @@
+:root {
+    --bg-base: #050505;
+    --bg-panel: #0a0a0c;
+    --accent: #00E5FF; /* Cian eléctrico y rebelde */
+    --accent-glow: rgba(0, 229, 255, 0.2);
+    --secondary: #7B1FA2;
+    --text-main: #E2E8F0;
+    --text-dim: #64748B;
+    --border-color: #1E293B;
+}
+
+body {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    background-color: var(--bg-base);
+    background-image: radial-gradient(circle at top right, var(--bg-panel), var(--bg-base));
+    color: var(--text-main);
+    margin: 0;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    background-color: var(--bg-panel);
+    width: 100%;
+    max-width: 850px;
+    padding: 35px;
+    border: 1px solid var(--border-color);
+    box-shadow: 8px 8px 0px var(--secondary);
+}
+
+h2 {
+    text-align: center;
+    margin-top: 0;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.highlight { 
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent-glow);
+}
+
+.form-group { margin-bottom: 25px; }
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+
+input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 14px;
+    background-color: #000;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: -4px 0 0 var(--accent);
+}
+
+.grid-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    background: #000;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.radio-group label.group-title {
+    color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+input[type="radio"] {
+    accent-color: var(--accent);
+    margin-right: 10px;
+}
+
+.salida-vivo {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: #000;
+    border-left: 4px solid var(--accent);
+    min-height: 80px;
+}
+
+.salida-vivo h3 {
+    margin-top: 0;
+    font-size: 0.85rem;
+    color: var(--secondary);
+    letter-spacing: 2px;
+}
+
+#monitor-resultado {
+    font-size: 1.2rem;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    color: var(--accent);
+}
