@@ -3,10 +3,11 @@
     --bg-panel: #0a0a0c;
     --accent: #00E5FF;
     --accent-glow: rgba(0, 229, 255, 0.2);
-    --secondary: #7B1FA2;
+    --secondary: #7a5af5;
     --text-main: #E2E8F0;
     --text-dim: #64748B;
     --border-color: #1E293B;
+    --item-bg: #111116;
 }
 
 body {
@@ -15,18 +16,22 @@ body {
     background-image: radial-gradient(circle at top right, var(--bg-panel), var(--bg-base));
     color: var(--text-main);
     margin: 0;
-    padding: 40px 20px;
+    padding: 20px;
     display: flex;
     justify-content: center;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .container {
     background-color: var(--bg-panel);
     width: 100%;
-    max-width: 850px;
-    padding: 35px;
+    max-width: 1000px;
+    padding: 30px;
     border: 1px solid var(--border-color);
     box-shadow: 8px 8px 0px var(--secondary);
+    display: flex;
+    flex-direction: column;
 }
 
 h2 {
@@ -42,7 +47,7 @@ h2 {
     text-shadow: 0 0 8px var(--accent-glow);
 }
 
-.form-group { margin-bottom: 25px; }
+.form-group { margin-bottom: 15px; }
 
 label {
     display: block;
@@ -52,7 +57,7 @@ label {
     text-transform: uppercase;
 }
 
-input[type="text"], input[type="number"], textarea {
+textarea {
     width: 100%;
     padding: 14px;
     background-color: #000;
@@ -61,64 +66,190 @@ input[type="text"], input[type="number"], textarea {
     font-family: inherit;
     box-sizing: border-box;
     transition: all 0.2s;
+    resize: vertical;
 }
 
-input:focus, textarea:focus {
+textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: -4px 0 0 var(--accent);
 }
 
-.grid-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    background: #000;
-    padding: 20px;
+/* Panel de control consolidado */
+.panel-control {
+    background: #0f0f16;
+    padding: 15px;
     border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
-.grid-options > div {
-    flex: 1 1 200px;
+.panel-control input[type="text"] {
+    flex: 1;
+    min-width: 250px;
+    padding: 10px;
+    background: #000;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-family: monospace;
 }
 
-.radio-group label.group-title {
-    color: var(--text-dim);
-    margin-bottom: 12px;
-}
-
-.radio-group label {
+.panel-control label {
     display: flex;
     align-items: center;
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-}
-
-input[type="radio"] {
-    accent-color: var(--accent);
-    margin-right: 10px;
+    gap: 8px;
+    color: var(--text-dim);
+    margin: 0;
+    text-transform: none;
 }
 
 .salida-vivo {
-    margin-top: 30px;
-    padding: 25px;
+    padding: 20px;
     background-color: #000;
     border-left: 4px solid var(--accent);
-    min-height: 80px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-.salida-vivo h3 {
-    margin-top: 0;
-    font-size: 0.85rem;
+.header-resultados {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.header-resultados h3 {
+    margin: 0;
+    font-size: 0.9rem;
     color: var(--secondary);
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
-#monitor-resultado {
-    font-size: 1.2rem;
-    word-wrap: break-word;
+.contador {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+#monitor-resultados {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#monitor-resultados::-webkit-scrollbar { width: 8px; }
+#monitor-resultados::-webkit-scrollbar-track { background: #000; }
+#monitor-resultados::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+#monitor-resultados::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* SISTEMA DE JERARQUÍA VISUAL (El núcleo de tu búsqueda rápida) */
+.resultado-item {
+    background-color: var(--item-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    border-left-width: 4px;
+}
+
+.confianza-alta {
+    border-left-color: #00ff88;
+    background: rgba(0, 255, 136, 0.05);
+    order: -2; /* Fuerza a que salgan hasta arriba visualmente */
+}
+
+.confianza-alta .resultado-texto {
+    font-size: 1.25rem;
+    color: #fff;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.confianza-media {
+    border-left-color: #ffb800;
+    order: -1;
+}
+
+.confianza-baja {
+    border-left-color: var(--border-color);
+    opacity: 0.6;
+}
+
+.confianza-baja:hover {
+    opacity: 1;
+}
+
+.resultado-item.coincide {
+    border: 2px solid #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+    order: -3; /* Coincidencia exacta de hash va hasta arriba de todo */
+}
+
+.resultado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.resultado-header strong { color: var(--accent); }
+
+.badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-alta { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+.badge-media { background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid #ffb800; }
+.badge-baja { background: rgba(255, 255, 255, 0.1); color: #888; }
+.badge-coincide { background: #00ff88; color: #000; margin-right: 10px; }
+
+.resultado-texto {
+    background: #000;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: monospace;
     white-space: pre-wrap;
-    color: var(--accent);
+    word-break: break-all;
+    margin: 10px 0;
+    color: var(--text-main);
+}
+
+.resultado-sha {
+    font-size: 0.85rem;
+    color: #ffeb3b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.5);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.btn-copiar {
+    background: #1E293B;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn-copiar:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
 }

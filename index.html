@@ -3,58 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cifrado Indómito - Desencadenado</title>
+    <title>Cifrado Indómito - Exam Mode</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h2>PRIMEROS PASOS <span class="highlight">CIFRANDO</span></h2>
-        
+        <h2>ANALIZADOR <span class="highlight">CRIPTOGRÁFICO AUTOMÁTICO</span></h2>
+
         <form id="nucleo-cifrado" onsubmit="return false;">
             <div class="form-group">
-                <label>Conjunto de Caracteres Base (Alfabeto):</label>
-                <input type="text" name="alfabeto" value="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 " required>
-            </div>
-
-            <div class="form-group">
-                <label>Texto a procesar:</label>
-                <textarea name="texto" rows="4" placeholder="Ingresa tu mensaje aquí (o la cadena del examen)..." required></textarea>
-            </div>
-
-            <div class="grid-options">
-                <div>
-                    <label>Módulo (César):</label>
-                    <input type="number" name="modulo" value="3">
-                </div>
-                <div>
-                    <label>Clave (Vigenère):</label>
-                    <input type="text" name="clave_vigenere" value="CLAVE">
-                </div>
-                
-                <div class="radio-group">
-                    <label class="group-title">Algoritmo:</label>
-                    <label><input type="radio" name="tipo_cifrado" value="cesar" checked> César</label>
-                    <label><input type="radio" name="tipo_cifrado" value="atbash"> Atbash</label>
-                    <label><input type="radio" name="tipo_cifrado" value="vigenere"> Vigenère</label>
-                    <label><input type="radio" name="tipo_cifrado" value="base64"> Base64</label>
-                    <label><input type="radio" name="tipo_cifrado" value="hex"> Hexadecimal</label>
-                </div>
-                
-                <div class="radio-group">
-                    <label class="group-title">Acción táctica:</label>
-                    <label><input type="radio" name="accion" value="cifrar" checked> Cifrar</label>
-                    <label><input type="radio" name="accion" value="descifrar"> Descifrar</label>
-                    <label><input type="radio" name="accion" value="fuerzabruta"> Fuerza Bruta (César)</label>
-                </div>
+                <label>Cadena interceptada (Ingresa el texto a analizar):</label>
+                <textarea id="texto-entrada" rows="4" placeholder="Pega aquí la cadena del examen..." required></textarea>
             </div>
         </form>
 
+        <div class="panel-control">
+            <input type="text" id="hash-esperado" placeholder="SHA-256 esperado (opcional para filtrado estricto)">
+            <label>
+                <input type="checkbox" id="mostrar-todos"> Mostrar todos los intentos (incluir basura)
+            </label>
+        </div>
+
         <div class="salida-vivo">
-            <h3>Monitor de Datos (Resultado)</h3>
-            <div id="monitor-resultado">Esperando flujo de datos...</div>
-            
-            <h3 style="margin-top: 25px; color: #ffeb3b;">Firma SHA-256 del Texto Resultante</h3>
-            <div id="monitor-sha256" style="color: #ffeb3b; font-family: monospace; word-wrap: break-word;">-</div>
+            <div class="header-resultados">
+                <h3>Monitor de Resultados</h3>
+                <span id="contador-resultados" class="contador">0 resultados procesados</span>
+            </div>
+            <div id="monitor-resultados">Esperando flujo de datos...</div>
         </div>
     </div>
 
