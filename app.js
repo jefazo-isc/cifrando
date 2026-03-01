@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="resultado-texto">${escapeHtml(res.texto)}</div>
                     <div class="resultado-sha">
                         <span><strong>SHA-256:</strong> ${res.sha256}</span>
-                        <button class="btn-copiar" data-copy="${escapeHtml(res.texto)}">Copiar texto</button>
+                        <button class="btn-copiar" data-copy="${encodeURIComponent(res.texto)}">Copiar texto</button>
                     </div>
                 </div>
             `;
@@ -92,7 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.btn-copiar').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const texto = e.target.getAttribute('data-copy');
+                // Decodificamos el payload exacto al recuperar del DOM
+                const texto = decodeURIComponent(e.target.getAttribute('data-copy'));
                 navigator.clipboard.writeText(texto).then(() => {
                     const original = e.target.textContent;
                     e.target.textContent = '¡Copiado!';
@@ -108,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Aún usamos escapeHtml para el div que MUESTRA el texto en pantalla, ya que ahí sí queremos que el navegador lo renderice seguro
     function escapeHtml(unsafe) {
         return unsafe.replace(/[&<>"']/g, function(m) {
             if(m === '&') return '&amp;';
