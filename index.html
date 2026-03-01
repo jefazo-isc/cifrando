@@ -18,7 +18,7 @@
 
             <div class="form-group">
                 <label>Texto a procesar:</label>
-                <textarea name="texto" rows="4" placeholder="Ingresa tu mensaje aquí..." required></textarea>
+                <textarea name="texto" rows="4" placeholder="Ingresa tu mensaje aquí (o la cadena del examen)..." required></textarea>
             </div>
 
             <div class="grid-options">
@@ -26,24 +26,35 @@
                     <label>Módulo (César):</label>
                     <input type="number" name="modulo" value="3">
                 </div>
+                <div>
+                    <label>Clave (Vigenère):</label>
+                    <input type="text" name="clave_vigenere" value="CLAVE">
+                </div>
                 
                 <div class="radio-group">
                     <label class="group-title">Algoritmo:</label>
                     <label><input type="radio" name="tipo_cifrado" value="cesar" checked> César</label>
                     <label><input type="radio" name="tipo_cifrado" value="atbash"> Atbash</label>
+                    <label><input type="radio" name="tipo_cifrado" value="vigenere"> Vigenère</label>
+                    <label><input type="radio" name="tipo_cifrado" value="base64"> Base64</label>
+                    <label><input type="radio" name="tipo_cifrado" value="hex"> Hexadecimal</label>
                 </div>
                 
                 <div class="radio-group">
                     <label class="group-title">Acción táctica:</label>
                     <label><input type="radio" name="accion" value="cifrar" checked> Cifrar</label>
                     <label><input type="radio" name="accion" value="descifrar"> Descifrar</label>
+                    <label><input type="radio" name="accion" value="fuerzabruta"> Fuerza Bruta (César)</label>
                 </div>
             </div>
         </form>
 
         <div class="salida-vivo">
-            <h3>Monitor de Datos</h3>
+            <h3>Monitor de Datos (Resultado)</h3>
             <div id="monitor-resultado">Esperando flujo de datos...</div>
+            
+            <h3 style="margin-top: 25px; color: #ffeb3b;">Firma SHA-256 del Texto Resultante</h3>
+            <div id="monitor-sha256" style="color: #ffeb3b; font-family: monospace; word-wrap: break-word;">-</div>
         </div>
     </div>
 
