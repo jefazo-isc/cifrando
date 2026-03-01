@@ -1,7 +1,7 @@
 :root {
     --bg-base: #050505;
     --bg-panel: #0a0a0c;
-    --accent: #00E5FF; /* Cian eléctrico y rebelde */
+    --accent: #00E5FF;
     --accent-glow: rgba(0, 229, 255, 0.2);
     --secondary: #7B1FA2;
     --text-main: #E2E8F0;
@@ -70,12 +70,16 @@ input:focus, textarea:focus {
 }
 
 .grid-options {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     background: #000;
     padding: 20px;
     border: 1px solid var(--border-color);
+}
+
+.grid-options > div {
+    flex: 1 1 200px;
 }
 
 .radio-group label.group-title {
