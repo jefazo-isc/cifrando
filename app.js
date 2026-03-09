@@ -10,16 +10,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const monitor = document.getElementById('monitor-resultados');
     const contador = document.getElementById('contador-resultados');
 
+    // Módulo RSA
+    const btnGenerarRsa = document.getElementById('btn-generar-rsa');
+    const rsaPrivada = document.getElementById('rsa-privada');
+    const rsaPublica = document.getElementById('rsa-publica');
+    const usarRsaCheck = document.getElementById('usar-rsa');
+
     // Fase 3
     const textoBaseSalida = document.getElementById('texto-base-salida');
-    const firmaSalida = document.getElementById('firma-salida');
     const metodoSalida = document.getElementById('metodo-salida');
+    const contenedorClaveSalida = document.getElementById('contenedor-clave-salida');
+    const claveSalida = document.getElementById('clave-salida');
     const payloadFinal = document.getElementById('payload-final');
     const hashFinal = document.getElementById('hash-final');
     const btnCopiarFinal = document.getElementById('btn-copiar-final');
+    const btnDescargarFinal = document.getElementById('btn-descargar-final');
 
     let resultadosCompletos = [];
     let hashCalculadoFase1 = '';
+
+    // EVENTOS RSA
+    btnGenerarRsa.addEventListener('click', async () => {
+        const claves = await MotorCifrado.generarLlavesRSA();
+        rsaPrivada.value = claves.privada;
+        rsaPublica.value = claves.publica;
+        btnFeedback(btnGenerarRsa, "¡Llaves Generadas!");
+        actualizarSalidaFinal();
+    });
+
+    usarRsaCheck.addEventListener('change', actualizarSalidaFinal);
+    rsaPrivada.addEventListener('input', actualizarSalidaFinal);
 
     // LECTURA DE ARCHIVO
     archivoEntrada.addEventListener('change', (e) => {
@@ -83,11 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function aplicarFiltros() {
         const mostrarTodos = mostrarTodosCheck.checked;
         let resultados = resultadosCompletos;
-
-        if (!mostrarTodos) {
-            resultados = resultados.slice(0, 15);
-        }
-
+        if (!mostrarTodos) resultados = resultados.slice(0, 15);
         renderizarResultados(resultados);
     }
 
@@ -102,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let htmlSalida = '';
         for (let i = 0; i < resultados.length; i++) {
             const res = resultados[i];
-            
             let claseConfianza = 'confianza-baja';
             let badge = '<span class="badge badge-baja">❌ Ruido</span>';
             
@@ -137,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         monitor.innerHTML = htmlSalida;
 
-        // Listeners para botones de la Fase 2
         document.querySelectorAll('.btn-copiar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const texto = e.target.getAttribute('data-copy');
@@ -151,27 +165,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 textoBaseSalida.value = resultadosCompletos[idx].texto;
                 btnFeedback(e.target, '¡Seleccionado!');
                 actualizarSalidaFinal();
-                // Scroll a la Fase 3
                 document.getElementById('fase-salida').scrollIntoView({ behavior: 'smooth' });
             });
         });
     }
 
-    // FASE 3 LÓGICA
+    // FASE 3 LÓGICA (Ensamblaje final)
     async function actualizarSalidaFinal() {
-        const base = textoBaseSalida.value;
-        if (!base) {
+        let textoCompleto = textoBaseSalida.value;
+        if (!textoCompleto) {
             payloadFinal.value = '';
             hashFinal.textContent = '-';
             return;
         }
 
-        const firma = firmaSalida.value;
-        const textoCompleto = base + (firma ? `\n\n${firma}` : '');
+        // Lógica de Firma RSA Estilo SAT (Inyectar firma criptográfica al final)
+        if (usarRsaCheck.checked) {
+            const pem = rsaPrivada.value.trim();
+            if (!pem.includes('BEGIN PRIVATE KEY')) {
+                payloadFinal.value = 'ERROR: Ingresa una llave privada válida en formato PEM en el Gestor RSA.';
+                return;
+            }
+            try {
+                const firmaCriptografica = await MotorCifrado.firmarMensajeRSA(textoCompleto, pem);
+                textoCompleto += `\n\n-----BEGIN RSA SIGNATURE-----\n${firmaCriptografica}\n-----END RSA SIGNATURE-----`;
+            } catch (error) {
+                payloadFinal.value = 'ERROR en RSA: Asegúrate de que la llave privada sea correcta y pertenezca al algoritmo RSASSA-PKCS1-v1_5.';
+                return;
+            }
+        }
+
         const metodo = metodoSalida.value;
+        const clave = claveSalida.value;
 
         try {
-            const resultado = await MotorCifrado.cifrarSalida(textoCompleto, metodo);
+            const resultado = await MotorCifrado.cifrarSalida(textoCompleto, metodo, clave);
             payloadFinal.value = resultado.cifrado;
             hashFinal.textContent = resultado.hash;
         } catch (e) {
@@ -180,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Utilidades
     function btnFeedback(target, msg = '¡Copiado!') {
         const original = target.textContent;
         const originalBg = target.style.background;
@@ -205,19 +232,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners principales
+    // Listeners
     entrada.addEventListener('input', procesarEntrada);
     hashEsperadoInput.addEventListener('input', verificarIntegridad);
     mostrarTodosCheck.addEventListener('change', () => aplicarFiltros());
     
     textoBaseSalida.addEventListener('input', actualizarSalidaFinal);
-    firmaSalida.addEventListener('input', actualizarSalidaFinal);
-    metodoSalida.addEventListener('change', actualizarSalidaFinal);
+    metodoSalida.addEventListener('change', () => {
+        if (metodoSalida.value === 'Cesar' || metodoSalida.value === 'XOR') {
+            contenedorClaveSalida.style.display = 'block';
+        } else {
+            contenedorClaveSalida.style.display = 'none';
+        }
+        actualizarSalidaFinal();
+    });
+    claveSalida.addEventListener('input', actualizarSalidaFinal);
 
     btnCopiarFinal.addEventListener('click', () => {
         if (payloadFinal.value) {
             navigator.clipboard.writeText(payloadFinal.value).then(() => btnFeedback(btnCopiarFinal));
         }
+    });
+
+    btnDescargarFinal.addEventListener('click', () => {
+        if (!payloadFinal.value) return;
+        const blob = new Blob([payloadFinal.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `examen_resuelto_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        btnFeedback(btnDescargarFinal, '¡Descargado!');
     });
 
     procesarEntrada();
