@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cifrado Indómito - Exam Pipeline V2</title>
+    <title>Cifrado Indómito - Exam Pipeline V3 (RSA Edition)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,16 +37,17 @@
                 <div class="fase-panel" id="fase-salida">
                     <div class="fase-header">FASE 3: Ensamblaje y Salida</div>
                     <div class="form-group">
-                        <label>Texto base (Descifrado - Primeros caracteres):</label>
-                        <textarea id="texto-base-salida-vista" rows="4" readonly placeholder="Selecciona un resultado de la Fase 2..."></textarea>
+                        <label>Texto base (Descifrado - Tu solución):</label>
+                        <textarea id="texto-base-salida" rows="4" placeholder="Edita aquí tu solución al examen o selecciona un resultado de la Fase 2..."></textarea>
                     </div>
                     <div class="panel-control" style="flex-direction: column; align-items: stretch; gap: 10px;">
-                        <div>
-                            <label>Firma / Resolución a inyectar (Se añadirá al final del archivo original):</label>
-                            <input type="text" id="firma-salida" placeholder="Ej: Resuelto por Yahir" style="width: 100%; box-sizing: border-box;">
+                        <div style="background: rgba(157, 124, 255, 0.1); padding: 15px; border: 1px solid var(--secondary); border-radius: 4px;">
+                            <label style="color: var(--secondary);">Firma Electrónica RSA (Estilo SAT):</label>
+                            <label style="font-size: 0.75rem; text-transform: none;"><input type="checkbox" id="usar-rsa"> Firmar criptográficamente el payload con mi Llave Privada</label>
                         </div>
+                        
                         <div>
-                            <label>Método de Cifrado Final:</label>
+                            <label>Método de Cifrado Final (Para el empaquetado):</label>
                             <select id="metodo-salida" style="width: 100%; padding: 10px; background: #000; color: var(--text-main); border: 1px solid var(--border-color);">
                                 <option value="Base64">Base64</option>
                                 <option value="Hexadecimal">Hexadecimal</option>
@@ -54,19 +55,28 @@
                                 <option value="Reverso">Reverso</option>
                                 <option value="ROT13">ROT13</option>
                                 <option value="Atbash">Atbash clásico</option>
+                                <option value="Cesar">César</option>
+                                <option value="XOR">XOR (1 Byte)</option>
                             </select>
+                        </div>
+                        <div id="contenedor-clave-salida" style="display: none;">
+                            <label>Clave / Desplazamiento (Para César o XOR):</label>
+                            <input type="number" id="clave-salida" placeholder="Ej: 5" value="1" style="width: 100%; box-sizing: border-box; padding: 10px; background: #000; color: var(--text-main); border: 1px solid var(--border-color);">
                         </div>
                     </div>
 
                     <div class="resultado-final-panel">
-                        <label>Payload Final Cifrado (Truncado visualmente):</label>
-                        <textarea id="payload-final-vista" rows="3" readonly></textarea>
+                        <label>Payload Final Cifrado (Listo para subir):</label>
+                        <textarea id="payload-final" rows="3" readonly></textarea>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
                             <div class="hash-box">
                                 <strong>SHA-256:</strong> <span id="hash-final">-</span>
                             </div>
-                            <button class="btn-accion highlight-btn" id="btn-copiar-final">Copiar Payload Completo</button>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-accion highlight-btn" id="btn-copiar-final">Copiar</button>
+                                <button class="btn-accion highlight-btn" id="btn-descargar-final">Descargar Archivo</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -74,6 +84,24 @@
             </div>
 
             <div class="columna-monitor">
+                
+                <div class="fase-panel" style="border-color: var(--secondary);">
+                    <div class="fase-header" style="background: var(--secondary); color: #fff;">GESTOR DE LLAVES RSA</div>
+                    <div class="panel-control" style="flex-direction: column; gap: 10px;">
+                        <button class="btn-accion" id="btn-generar-rsa" style="background: var(--secondary); color: white; width: 100%;">Generar Nuevo Par de Llaves (2048 bits)</button>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label>Llave Privada (No la compartas):</label>
+                                <textarea id="rsa-privada" rows="4" placeholder="-----BEGIN PRIVATE KEY-----..."></textarea>
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Llave Pública (Para el profesor):</label>
+                                <textarea id="rsa-publica" rows="4" placeholder="-----BEGIN PUBLIC KEY-----..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="fase-panel h-100">
                     <div class="fase-header">FASE 2: Análisis Heurístico</div>
                     <div class="panel-control">
