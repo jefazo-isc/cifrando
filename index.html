@@ -3,122 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cifrado Indómito - Exam Pipeline V3 (RSA Edition)</title>
+    <title>Cifrado Indómito - Pipeline</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="header-principal">
+        <h1>ANALIZADOR CRIPTOGRÁFICO</h1>
+        <p>Sigue los pasos en orden para resolver y firmar el examen.</p>
+    </div>
+
     <div class="container">
-        <h2>ANALIZADOR <span class="highlight">CRIPTOGRÁFICO AUTOMÁTICO</span></h2>
-
-        <div class="layout-grid">
-            <div class="columna-trabajo">
-                
-                <div class="fase-panel">
-                    <div class="fase-header">FASE 1: Intercepción y Verificación</div>
-                    <div class="panel-control">
-                        <div class="form-group" style="flex: 1; min-width: 100%;">
-                            <label>Archivo interceptado (Soporta TXT pesados):</label>
-                            <input type="file" id="archivo-entrada" class="file-input">
-                        </div>
-                        <div class="form-group" style="flex: 1; min-width: 100%;">
-                            <label>Checksum SHA-256 Esperado (Integridad):</label>
-                            <input type="text" id="hash-esperado" placeholder="Ej: a591a6d4...">
-                        </div>
+        
+        <div class="step-card">
+            <div class="step-number">PASO 1</div>
+            <div class="step-header">Gestor de Llaves RSA (Firma Electrónica)</div>
+            <div class="step-content">
+                <p class="instruccion">Genera tus llaves aquí mismo o pega unas creadas en la terminal. Las necesitarás en el paso 4.</p>
+                <button class="btn-primary" id="btn-generar-rsa">Generar Nuevo Par de Llaves (2048 bits)</button>
+                <div class="grid-2-col">
+                    <div>
+                        <label>Llave Privada (Se usa para firmar):</label>
+                        <textarea id="rsa-privada" rows="4" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
                     </div>
-                    
-                    <div id="estado-integridad" class="estado-integridad neutro">Esperando datos...</div>
-
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label>O entrada manual:</label>
-                        <textarea id="texto-entrada" rows="5" placeholder="Pega aquí la cadena si no tienes el archivo..."></textarea>
-                    </div>
-                </div>
-
-                <div class="fase-panel" id="fase-salida">
-                    <div class="fase-header">FASE 3: Ensamblaje y Salida</div>
-                    <div class="form-group">
-                        <label>Texto base (Descifrado - Tu solución):</label>
-                        <textarea id="texto-base-salida" rows="4" placeholder="Edita aquí tu solución al examen o selecciona un resultado de la Fase 2..."></textarea>
-                    </div>
-                    <div class="panel-control" style="flex-direction: column; align-items: stretch; gap: 10px;">
-                        <div style="background: rgba(157, 124, 255, 0.1); padding: 15px; border: 1px solid var(--secondary); border-radius: 4px;">
-                            <label style="color: var(--secondary);">Firma Electrónica RSA (Estilo SAT):</label>
-                            <label style="font-size: 0.75rem; text-transform: none;"><input type="checkbox" id="usar-rsa"> Firmar criptográficamente el payload con mi Llave Privada</label>
-                        </div>
-                        
-                        <div>
-                            <label>Método de Cifrado Final (Para el empaquetado):</label>
-                            <select id="metodo-salida" style="width: 100%; padding: 10px; background: #000; color: var(--text-main); border: 1px solid var(--border-color);">
-                                <option value="Base64">Base64</option>
-                                <option value="Hexadecimal">Hexadecimal</option>
-                                <option value="Binario">Binario (8 bits)</option>
-                                <option value="Reverso">Reverso</option>
-                                <option value="ROT13">ROT13</option>
-                                <option value="Atbash">Atbash clásico</option>
-                                <option value="Cesar">César</option>
-                                <option value="XOR">XOR (1 Byte)</option>
-                            </select>
-                        </div>
-                        <div id="contenedor-clave-salida" style="display: none;">
-                            <label>Clave / Desplazamiento (Para César o XOR):</label>
-                            <input type="number" id="clave-salida" placeholder="Ej: 5" value="1" style="width: 100%; box-sizing: border-box; padding: 10px; background: #000; color: var(--text-main); border: 1px solid var(--border-color);">
-                        </div>
-                    </div>
-
-                    <div class="resultado-final-panel">
-                        <label>Payload Final Cifrado (Listo para subir):</label>
-                        <textarea id="payload-final" rows="3" readonly></textarea>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
-                            <div class="hash-box">
-                                <strong>SHA-256:</strong> <span id="hash-final">-</span>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn-accion highlight-btn" id="btn-copiar-final">Copiar</button>
-                                <button class="btn-accion highlight-btn" id="btn-descargar-final">Descargar Archivo</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="columna-monitor">
-                
-                <div class="fase-panel" style="border-color: var(--secondary);">
-                    <div class="fase-header" style="background: var(--secondary); color: #fff;">GESTOR DE LLAVES RSA</div>
-                    <div class="panel-control" style="flex-direction: column; gap: 10px;">
-                        <button class="btn-accion" id="btn-generar-rsa" style="background: var(--secondary); color: white; width: 100%;">Generar Nuevo Par de Llaves (2048 bits)</button>
-                        <div style="display: flex; gap: 10px;">
-                            <div style="flex: 1;">
-                                <label>Llave Privada (No la compartas):</label>
-                                <textarea id="rsa-privada" rows="4" placeholder="-----BEGIN PRIVATE KEY-----..."></textarea>
-                            </div>
-                            <div style="flex: 1;">
-                                <label>Llave Pública (Para el profesor):</label>
-                                <textarea id="rsa-publica" rows="4" placeholder="-----BEGIN PUBLIC KEY-----..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="fase-panel h-100">
-                    <div class="fase-header">FASE 2: Análisis Heurístico</div>
-                    <div class="panel-control">
-                        <label>
-                            <input type="checkbox" id="mostrar-todos"> Mostrar todos los intentos (incluir basura)
-                        </label>
-                    </div>
-                    <div class="salida-vivo">
-                        <div class="header-resultados">
-                            <h3>Monitor en Vivo</h3>
-                            <span id="contador-resultados" class="contador">0 resultados procesados</span>
-                        </div>
-                        <div id="monitor-resultados">Esperando flujo de datos...</div>
+                    <div>
+                        <label>Llave Pública (Entrégala al profesor):</label>
+                        <textarea id="rsa-publica" rows="4" placeholder="-----BEGIN PUBLIC KEY-----"></textarea>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="flecha-separador">⬇</div>
+
+        <div class="step-card">
+            <div class="step-number">PASO 2</div>
+            <div class="step-header">Intercepción del Examen</div>
+            <div class="step-content">
+                <p class="instruccion">Sube el archivo cifrado que te mandó el profesor para verificar su integridad.</p>
+                
+                <div class="form-group">
+                    <label>Sube el archivo TXT aquí:</label>
+                    <input type="file" id="archivo-entrada" class="file-input">
+                </div>
+                
+                <div class="form-group">
+                    <label>Checksum SHA-256 esperado (Pégalo aquí para comparar):</label>
+                    <input type="text" id="hash-esperado" class="text-input" placeholder="Ej: a591a6d4...">
+                </div>
+
+                <div id="estado-integridad" class="estado-integridad neutro">Esperando archivo...</div>
+
+                <div class="form-group mt-15">
+                    <label>¿No tienes archivo? Pega el texto cifrado manualmente:</label>
+                    <textarea id="texto-entrada" rows="3" placeholder="Pega aquí la cadena cifrada..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="flecha-separador">⬇</div>
+
+        <div class="step-card">
+            <div class="step-number">PASO 3</div>
+            <div class="step-header">Análisis Heurístico (Descifrado)</div>
+            <div class="step-content">
+                <p class="instruccion">El sistema intentará romper el cifrado automáticamente. Selecciona el resultado que tenga sentido.</p>
+                
+                <div class="panel-control-inline">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="mostrar-todos"> Mostrar intentos fallidos (basura)
+                    </label>
+                    <span id="contador-resultados" class="contador">0 resultados procesados</span>
+                </div>
+
+                <div id="monitor-resultados" class="monitor-blanco">
+                    <div class="mensaje-espera">El análisis aparecerá aquí en cuanto subas un archivo.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flecha-separador">⬇</div>
+
+        <div class="step-card highlight-card">
+            <div class="step-number">PASO 4</div>
+            <div class="step-header">Resolución y Cifrado Final</div>
+            <div class="step-content">
+                <p class="instruccion">Escribe tus respuestas, aplica tu firma y vuelve a cifrar el documento para entregarlo.</p>
+                
+                <div class="form-group">
+                    <label>Texto a entregar (Tu examen resuelto):</label>
+                    <textarea id="texto-base-salida" rows="6" placeholder="Resuelve el examen aquí..."></textarea>
+                </div>
+
+                <div class="caja-firma">
+                    <label class="checkbox-label font-bold">
+                        <input type="checkbox" id="usar-rsa"> Aplicar mi Firma Electrónica RSA al final del documento
+                    </label>
+                    <p class="texto-ayuda">Esto inyectará la firma generada con tu Llave Privada del Paso 1.</p>
+                </div>
+
+                <div class="grid-2-col mt-15">
+                    <div class="form-group">
+                        <label>Cifrado final requerido por el profesor:</label>
+                        <select id="metodo-salida" class="text-input select-input">
+                            <option value="Base64">Base64</option>
+                            <option value="Hexadecimal">Hexadecimal</option>
+                            <option value="Binario">Binario (8 bits)</option>
+                            <option value="Reverso">Reverso</option>
+                            <option value="ROT13">ROT13</option>
+                            <option value="Atbash">Atbash clásico</option>
+                            <option value="Cesar">César</option>
+                            <option value="XOR">XOR (1 Byte)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="contenedor-clave-salida" style="display: none;">
+                        <label>Clave (Solo para César o XOR):</label>
+                        <input type="number" id="clave-salida" class="text-input" placeholder="Ej: 5" value="1">
+                    </div>
+                </div>
+
+                <div class="resultado-final-panel">
+                    <label>Archivo Final (Listo para entregar):</label>
+                    <textarea id="payload-final" rows="4" readonly class="textarea-final"></textarea>
+                    
+                    <div class="acciones-finales">
+                        <div class="hash-box">
+                            <strong>SHA-256 Final:</strong> <span id="hash-final">-</span>
+                        </div>
+                        <div class="botones-finales">
+                            <button class="btn-secondary" id="btn-copiar-final">Copiar Texto</button>
+                            <button class="btn-success" id="btn-descargar-final">Descargar Archivo .txt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="cipher.js"></script>
