@@ -1,9 +1,4 @@
 const MotorCifrado = (function() {
-    // Alfabeto ASCII imprimible (32-126) para ciertos cifrados
-    const ASCII_PRINTABLE = Array.from({ length: 95 }, (_, i) => String.fromCharCode(i + 32)).join('');
-    const ALFABETO_COMPLETO = Array.from({ length: 256 }, (_, i) => String.fromCharCode(i)).join('');
-
-    // Palabras comunes en inglés y español para puntuación
     const COMMON_WORDS_EN = new Set(['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
         'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his',
         'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all',
@@ -22,7 +17,6 @@ const MotorCifrado = (function() {
         'nada', 'casa', 'año', 'día', 'hombre', 'mujer', 'niño', 'amigo', 'ciudad', 'país',
         'vida', 'mundo', 'familia', 'trabajar', 'estudiar', 'examen', 'programa', 'cifrado']);
 
-    // Frecuencia de letras en español (aproximada)
     const LETTER_FREQ_ES = {
         'a': 0.11525, 'b': 0.02215, 'c': 0.04019, 'd': 0.05010, 'e': 0.12181,
         'f': 0.00692, 'g': 0.01768, 'h': 0.00703, 'i': 0.06247, 'j': 0.00493,
@@ -32,7 +26,6 @@ const MotorCifrado = (function() {
         'z': 0.00467
     };
 
-    // Genera SHA-256 de un mensaje
     async function generarSHA256(mensaje) {
         const msgBuffer = new TextEncoder().encode(mensaje);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -40,17 +33,24 @@ const MotorCifrado = (function() {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Convierte un array de bytes (Uint8Array) a cadena UTF-8
     function utf8FromBytes(bytes) {
-        return new TextDecoder('utf-8').decode(bytes);
+        try {
+            return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch(e) {
+            // Fallback si hay bytes no válidos para UTF-8 (común en binarios crudos)
+            return Array.from(bytes).map(b => String.fromCharCode(b)).join('');
+        }
     }
 
-    // Puntúa un texto según su probabilidad de ser español/inglés (mayor puntuación = más probable)
-    function puntuarTexto(texto) {
-        if (texto.length === 0) return 0;
+    // OPTIMIZACIÓN CRÍTICA PARA ARCHIVOS PESADOS:
+    // Solo evalúa los primeros 2500 caracteres. Si el inicio tiene sentido, todo lo tiene.
+    function puntuarTexto(textoCompleto) {
+        if (textoCompleto.length === 0) return 0;
+        
+        const texto = textoCompleto.substring(0, 2500); 
         let puntuacion = 0;
         const lower = texto.toLowerCase();
-        // 1. Frecuencia de letras (solo letras) - mezcla inglés/español, usamos español como base
+        
         let letras = 0;
         for (let char of lower) {
             if (char >= 'a' && char <= 'z') {
@@ -58,30 +58,26 @@ const MotorCifrado = (function() {
                 puntuacion += LETTER_FREQ_ES[char] || 0;
             }
         }
-        // Normalizar por número de letras
         if (letras > 0) puntuacion = (puntuacion / letras) * 100;
 
-        // 2. Presencia de palabras comunes (inglés y español)
         const palabras = lower.split(/\s+/);
         for (let palabra of palabras) {
             if (COMMON_WORDS_EN.has(palabra)) puntuacion += 3;
-            if (COMMON_WORDS_ES.has(palabra)) puntuacion += 5; // mayor peso para español
+            if (COMMON_WORDS_ES.has(palabra)) puntuacion += 5;
         }
 
-        // 3. Proporción de letras vs no letras (incentiva texto alfabético)
         const proporcionLetras = letras / texto.length;
         puntuacion += proporcionLetras * 20;
 
         return puntuacion;
     }
 
-    // Decodificadores específicos (devuelven cadena UTF-8)
     const decodificadores = [
         {
             nombre: 'Base64',
-            test: (texto) => /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(texto) && texto.length % 4 === 0,
+            test: (texto) => /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(texto.trim().substring(0, 100)) && texto.trim().length % 4 === 0,
             decodificar: (texto) => {
-                const binaryString = atob(texto);
+                const binaryString = atob(texto.trim());
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
@@ -90,29 +86,10 @@ const MotorCifrado = (function() {
             }
         },
         {
-            nombre: 'Base32',
-            test: (texto) => /^[A-Z2-7]+=*$/.test(texto) && texto.length % 8 === 0,
-            decodificar: (texto) => {
-                const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-                let bits = '';
-                texto = texto.replace(/=+$/, '');
-                for (let i = 0; i < texto.length; i++) {
-                    const val = base32chars.indexOf(texto[i]);
-                    if (val === -1) throw new Error('Carácter inválido');
-                    bits += val.toString(2).padStart(5, '0');
-                }
-                const bytes = [];
-                for (let i = 0; i + 8 <= bits.length; i += 8) {
-                    bytes.push(parseInt(bits.substr(i, 8), 2));
-                }
-                return utf8FromBytes(new Uint8Array(bytes));
-            }
-        },
-        {
             nombre: 'Hexadecimal',
             test: (texto) => {
-                const limpio = texto.replace(/\s+/g, '');
-                return /^[0-9A-Fa-f]+$/.test(limpio) && limpio.length % 2 === 0;
+                const limpio = texto.substring(0, 100).replace(/\s+/g, '');
+                return /^[0-9A-Fa-f]+$/.test(limpio) && texto.replace(/\s+/g, '').length % 2 === 0;
             },
             decodificar: (texto) => {
                 const limpio = texto.replace(/\s+/g, '');
@@ -126,8 +103,8 @@ const MotorCifrado = (function() {
         {
             nombre: 'Binario (8 bits)',
             test: (texto) => {
-                const limpio = texto.replace(/\s+/g, '');
-                return /^[01]+$/.test(limpio) && limpio.length % 8 === 0;
+                const limpio = texto.substring(0, 80).replace(/\s+/g, '');
+                return /^[01]+$/.test(limpio) && texto.replace(/\s+/g, '').length % 8 === 0;
             },
             decodificar: (texto) => {
                 const limpio = texto.replace(/\s+/g, '');
@@ -144,7 +121,7 @@ const MotorCifrado = (function() {
             decodificar: (texto) => texto.split('').reverse().join('')
         },
         {
-            nombre: 'ROT13 (solo A-Za-z)',
+            nombre: 'ROT13',
             test: () => true,
             decodificar: (texto) => {
                 return texto.replace(/[A-Za-z]/g, c => {
@@ -154,47 +131,17 @@ const MotorCifrado = (function() {
             }
         },
         {
-            nombre: 'ROT47 (!-~)',
-            test: () => true,
-            decodificar: (texto) => {
-                return texto.replace(/[!-~]/g, c => {
-                    let code = c.charCodeAt(0);
-                    return String.fromCharCode(33 + (code - 33 + 47) % 94);
-                });
-            }
-        },
-        {
-            nombre: 'Atbash clásico (A-Z, a-z)',
+            nombre: 'Atbash',
             test: () => true,
             decodificar: (texto) => {
                 return texto.replace(/[A-Za-z]/g, c => {
-                    if (c >= 'A' && c <= 'Z') {
-                        return String.fromCharCode(155 - c.charCodeAt(0));
-                    } else {
-                        return String.fromCharCode(219 - c.charCodeAt(0));
-                    }
+                    if (c >= 'A' && c <= 'Z') return String.fromCharCode(155 - c.charCodeAt(0));
+                    return String.fromCharCode(219 - c.charCodeAt(0));
                 });
-            }
-        },
-        {
-            nombre: 'Atbash ASCII imprimible (32-126)',
-            test: () => true,
-            decodificar: (texto) => {
-                let res = '';
-                for (let i = 0; i < texto.length; i++) {
-                    const code = texto.charCodeAt(i);
-                    if (code >= 32 && code <= 126) {
-                        res += String.fromCharCode(32 + (126 - code));
-                    } else {
-                        res += texto[i];
-                    }
-                }
-                return res;
             }
         }
     ];
 
-    // Cifrado César sobre ASCII imprimible (32-126)
     function cesarImprimible(texto, desplazamiento) {
         let res = '';
         for (let i = 0; i < texto.length; i++) {
@@ -210,63 +157,111 @@ const MotorCifrado = (function() {
         return res;
     }
 
-    // Método principal: descubre todos los posibles textos
+    function xorUnByte(texto, clave) {
+        let res = '';
+        for (let i = 0; i < texto.length; i++) {
+            res += String.fromCharCode(texto.charCodeAt(i) ^ clave);
+        }
+        return res;
+    }
+
     async function autoDescubrir(texto) {
         const resultados = [];
         const t0 = performance.now();
 
-        // 1. Ejecutar decodificadores específicos
+        // 1. Decodificadores estándar
         for (let dec of decodificadores) {
             try {
                 if (dec.test(texto)) {
                     const decodificado = dec.decodificar(texto);
-                    // Evitar duplicados o resultados vacíos
                     if (decodificado && decodificado !== texto) {
-                        const sha = await generarSHA256(decodificado);
                         const puntuacion = puntuarTexto(decodificado);
                         resultados.push({
                             metodo: dec.nombre,
                             texto: decodificado,
-                            sha256: sha,
                             puntuacion: puntuacion
                         });
                     }
                 }
-            } catch (e) {
-                // Fallo silencioso
-            }
+            } catch (e) {}
         }
 
-        // 2. Fuerza bruta César sobre ASCII imprimible (95 desplazamientos)
-        const cesarPromises = [];
+        // 2. César (95 variaciones)
         for (let shift = 1; shift < 95; shift++) {
-            cesarPromises.push((async () => {
-                try {
-                    const decodificado = cesarImprimible(texto, shift);
-                    if (decodificado && decodificado !== texto) {
-                        const sha = await generarSHA256(decodificado);
-                        const puntuacion = puntuarTexto(decodificado);
+            try {
+                const decodificado = cesarImprimible(texto, shift);
+                if (decodificado && decodificado !== texto) {
+                    const puntuacion = puntuarTexto(decodificado);
+                    if (puntuacion > 10) { // Filtrar basura total
                         resultados.push({
-                            metodo: `César ASCII (desplazamiento -${shift})`,
+                            metodo: `César (desplazamiento -${shift})`,
                             texto: decodificado,
-                            sha256: sha,
                             puntuacion: puntuacion
                         });
                     }
-                } catch (e) {}
-            })());
+                }
+            } catch (e) {}
         }
-        await Promise.all(cesarPromises);
 
-        // 3. Ordenar por puntuación descendente
+        // 3. XOR de 1 Byte (255 variaciones) - Clásico en Hacking de Redes
+        for (let key = 1; key < 256; key++) {
+            try {
+                const decodificado = xorUnByte(texto, key);
+                if (decodificado && decodificado !== texto) {
+                    const puntuacion = puntuarTexto(decodificado);
+                    if (puntuacion > 15) { // Umbral más alto para XOR para evitar ruido
+                        resultados.push({
+                            metodo: `XOR (Clave: 0x${key.toString(16).padStart(2,'0')})`,
+                            texto: decodificado,
+                            puntuacion: puntuacion
+                        });
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Ordenar, generar SHA-256 diferido solo para los mejores para ahorrar CPU
         resultados.sort((a, b) => b.puntuacion - a.puntuacion);
+        
+        // Calcular hashes solo de los primeros 30 resultados
+        const maxResultados = Math.min(resultados.length, 30);
+        for(let i=0; i<maxResultados; i++){
+            resultados[i].sha256 = await generarSHA256(resultados[i].texto);
+        }
 
-        console.log(`Procesado en ${performance.now() - t0} ms`);
-        return resultados;
+        console.log(`Análisis de ${texto.length} bytes completado en ${Math.round(performance.now() - t0)} ms`);
+        return resultados.slice(0, 30);
+    }
+
+    const codificadoresSalida = {
+        'Base64': (texto) => {
+            const bytes = new TextEncoder().encode(texto);
+            const binString = String.fromCodePoint(...bytes);
+            return btoa(binString);
+        },
+        'Hexadecimal': (texto) => {
+            const bytes = new TextEncoder().encode(texto);
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        },
+        'Binario': (texto) => {
+            const bytes = new TextEncoder().encode(texto);
+            return Array.from(bytes).map(b => b.toString(2).padStart(8, '0')).join('');
+        },
+        'Reverso': (texto) => texto.split('').reverse().join(''),
+        'ROT13': (texto) => decodificadores.find(d => d.nombre === 'ROT13').decodificar(texto),
+        'Atbash': (texto) => decodificadores.find(d => d.nombre === 'Atbash').decodificar(texto)
+    };
+
+    async function cifrarSalida(texto, metodo) {
+        if (!codificadoresSalida[metodo]) throw new Error('Método no soportado');
+        const cifrado = codificadoresSalida[metodo](texto);
+        const hash = await generarSHA256(cifrado);
+        return { cifrado, hash };
     }
 
     return {
         generarSHA256,
-        autoDescubrir
+        autoDescubrir,
+        cifrarSalida
     };
 })();

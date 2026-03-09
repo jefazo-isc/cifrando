@@ -3,33 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cifrado Indómito - Exam Mode</title>
+    <title>Cifrado Indómito - Exam Pipeline V2</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h2>ANALIZADOR <span class="highlight">CRIPTOGRÁFICO AUTOMÁTICO</span></h2>
 
-        <form id="nucleo-cifrado" onsubmit="return false;">
-            <div class="form-group">
-                <label>Cadena interceptada (Ingresa el texto a analizar):</label>
-                <textarea id="texto-entrada" rows="4" placeholder="Pega aquí la cadena del examen..." required></textarea>
-            </div>
-        </form>
+        <div class="layout-grid">
+            <div class="columna-trabajo">
+                
+                <div class="fase-panel">
+                    <div class="fase-header">FASE 1: Intercepción y Verificación</div>
+                    <div class="panel-control">
+                        <div class="form-group" style="flex: 1; min-width: 100%;">
+                            <label>Archivo interceptado (Soporta TXT pesados):</label>
+                            <input type="file" id="archivo-entrada" class="file-input">
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 100%;">
+                            <label>Checksum SHA-256 Esperado (Integridad):</label>
+                            <input type="text" id="hash-esperado" placeholder="Ej: a591a6d4...">
+                        </div>
+                    </div>
+                    
+                    <div id="estado-integridad" class="estado-integridad neutro">Esperando datos...</div>
 
-        <div class="panel-control">
-            <input type="text" id="hash-esperado" placeholder="SHA-256 esperado (opcional para filtrado estricto)">
-            <label>
-                <input type="checkbox" id="mostrar-todos"> Mostrar todos los intentos (incluir basura)
-            </label>
-        </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>O entrada manual:</label>
+                        <textarea id="texto-entrada" rows="5" placeholder="Pega aquí la cadena si no tienes el archivo..."></textarea>
+                    </div>
+                </div>
 
-        <div class="salida-vivo">
-            <div class="header-resultados">
-                <h3>Monitor de Resultados</h3>
-                <span id="contador-resultados" class="contador">0 resultados procesados</span>
+                <div class="fase-panel" id="fase-salida">
+                    <div class="fase-header">FASE 3: Ensamblaje y Salida</div>
+                    <div class="form-group">
+                        <label>Texto base (Descifrado - Primeros caracteres):</label>
+                        <textarea id="texto-base-salida-vista" rows="4" readonly placeholder="Selecciona un resultado de la Fase 2..."></textarea>
+                    </div>
+                    <div class="panel-control" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                        <div>
+                            <label>Firma / Resolución a inyectar (Se añadirá al final del archivo original):</label>
+                            <input type="text" id="firma-salida" placeholder="Ej: Resuelto por Yahir" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label>Método de Cifrado Final:</label>
+                            <select id="metodo-salida" style="width: 100%; padding: 10px; background: #000; color: var(--text-main); border: 1px solid var(--border-color);">
+                                <option value="Base64">Base64</option>
+                                <option value="Hexadecimal">Hexadecimal</option>
+                                <option value="Binario">Binario (8 bits)</option>
+                                <option value="Reverso">Reverso</option>
+                                <option value="ROT13">ROT13</option>
+                                <option value="Atbash">Atbash clásico</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="resultado-final-panel">
+                        <label>Payload Final Cifrado (Truncado visualmente):</label>
+                        <textarea id="payload-final-vista" rows="3" readonly></textarea>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <div class="hash-box">
+                                <strong>SHA-256:</strong> <span id="hash-final">-</span>
+                            </div>
+                            <button class="btn-accion highlight-btn" id="btn-copiar-final">Copiar Payload Completo</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div id="monitor-resultados">Esperando flujo de datos...</div>
+
+            <div class="columna-monitor">
+                <div class="fase-panel h-100">
+                    <div class="fase-header">FASE 2: Análisis Heurístico</div>
+                    <div class="panel-control">
+                        <label>
+                            <input type="checkbox" id="mostrar-todos"> Mostrar todos los intentos (incluir basura)
+                        </label>
+                    </div>
+                    <div class="salida-vivo">
+                        <div class="header-resultados">
+                            <h3>Monitor en Vivo</h3>
+                            <span id="contador-resultados" class="contador">0 resultados procesados</span>
+                        </div>
+                        <div id="monitor-resultados">Esperando flujo de datos...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
