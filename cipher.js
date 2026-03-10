@@ -150,6 +150,27 @@ const MotorCifrado = (function() {
     }
 
     /* -------------------------------------------------------------
+       MÓDULO AES (OpenSSL Compatible via CryptoJS)
+    ------------------------------------------------------------- */
+    function descifrarAES(textoCifradoBase64, password) {
+        try {
+            // CryptoJS decodifica nativamente archivos encriptados con openssl (Salted__)
+            const bytes = CryptoJS.AES.decrypt(textoCifradoBase64.trim(), password);
+            const textoClaro = bytes.toString(CryptoJS.enc.Utf8);
+            if (!textoClaro) throw new Error("Llave incorrecta o formato inválido.");
+            return textoClaro;
+        } catch (e) {
+            throw new Error("Fallo al descifrar AES. Verifica la contraseña y que el archivo se haya leído bien.");
+        }
+    }
+
+    function cifrarAES(textoPlano, password) {
+        if (!password) throw new Error("Necesitas ingresar una contraseña para cifrar en AES.");
+        // Devuelve el string Base64 compatible con OpenSSL
+        return CryptoJS.AES.encrypt(textoPlano, password).toString();
+    }
+
+    /* -------------------------------------------------------------
        MÓDULO RSA (Estándar PKCS#8 / SPKI)
     ------------------------------------------------------------- */
     function arrayBufferToPem(buffer, type) {
@@ -187,6 +208,7 @@ const MotorCifrado = (function() {
     }
 
     const codificadoresSalida = {
+        'AES': (texto, clave) => cifrarAES(texto, clave),
         'Base64': (texto) => btoa(String.fromCodePoint(...new TextEncoder().encode(texto))),
         'Hexadecimal': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(16).padStart(2, '0')).join(''),
         'Binario': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(2).padStart(8, '0')).join(''),
@@ -204,5 +226,5 @@ const MotorCifrado = (function() {
         return { cifrado, hash };
     }
 
-    return { generarSHA256, autoDescubrir, cifrarSalida, generarLlavesRSA, firmarMensajeRSA };
+    return { generarSHA256, autoDescubrir, cifrarSalida, generarLlavesRSA, firmarMensajeRSA, descifrarAES };
 })();
