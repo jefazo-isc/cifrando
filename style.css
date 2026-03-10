@@ -68,6 +68,11 @@ body {
     box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
 }
 
+.aes-card {
+    border: 2px solid var(--danger);
+    background: #fffcfc;
+}
+
 .step-number {
     position: absolute;
     top: -15px;
@@ -79,6 +84,10 @@ body {
     border-radius: 20px;
     font-size: 0.85rem;
     letter-spacing: 1px;
+}
+
+.aes-badge {
+    background: var(--danger);
 }
 
 .step-header {
@@ -170,14 +179,6 @@ button:active { transform: scale(0.98); }
 
 .btn-success { background: var(--success); color: white; }
 .btn-success:hover { background: #15803d; }
-
-.btn-accion-chico {
-    padding: 6px 12px;
-    background: var(--primary);
-    color: white;
-    font-size: 0.8rem;
-    border-radius: 4px;
-}
 
 /* Estados e Indicadores */
 .estado-integridad {
