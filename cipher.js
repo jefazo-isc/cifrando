@@ -1,6 +1,7 @@
 const MotorCifrado = (function() {
+    // ... [MANTÉN TUS CONSTANTES DE PALABRAS COMUNES Y SHA256 EXACTAMENTE IGUAL HASTA LA FUNCIÓN xorUnByte] ...
     const COMMON_WORDS_EN = new Set(['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just', 'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us']);
-    const COMMON_WORDS_ES = new Set(['el', 'la', 'los', 'las', 'de', 'que', 'y', 'a', 'en', 'un', 'ser', 'se', 'no', 'haber', 'por', 'con', 'su', 'para', 'como', 'estar', 'tener', 'le', 'yo', 'lo', 'todo', 'pero', 'más', 'hacer', 'bien', 'ahora', 'cuando', 'poder', 'decir', 'este', 'sin', 'sobre', 'trabajo', 'vez', 'entre', 'nunca', 'gran', 'ella', 'ellas', 'ellos', 'nos', 'os', 'mi', 'tu', 'te', 'me', 'se', 'ya', 'hay', 'sí', 'así', 'algo', 'nada', 'casa', 'año', 'día', 'hombre', 'mujer', 'niño', 'amigo', 'ciudad', 'país', 'vida', 'mundo', 'familia', 'trabajar', 'estudiar', 'examen', 'programa', 'cifrado']);
+    const COMMON_WORDS_ES = new Set(['el', 'la', 'los', 'las', 'de', 'que', 'y', 'a', 'en', 'un', 'ser', 'se', 'no', 'haber', 'por', 'con', 'su', 'para', 'como', 'estar', 'tener', 'le', 'yo', 'lo', 'todo', 'pero', 'más', 'hacer', 'bien', 'ahora', 'cuando', 'poder', 'decir', 'este', 'sin', 'sobre', 'trabajo', 'vez', 'entre', 'nunca', 'gran', 'ella', 'ellas', 'ellos', 'nos', 'os', 'mi', 'tu', 'te', 'me', 'se', 'ya', 'hay', 'sí', 'así', 'algo', 'nada', 'casa', 'año', 'día', 'hombre', 'mujer', 'niño', 'amigo', 'ciudad', 'país', 'vida', 'mundo', 'familia', 'trabajar', 'estudiar', 'programa', 'cifrado', 'seguridad', 'sistema']);
     const LETTER_FREQ_ES = {'a': 0.11525, 'b': 0.02215, 'c': 0.04019, 'd': 0.05010, 'e': 0.12181, 'f': 0.00692, 'g': 0.01768, 'h': 0.00703, 'i': 0.06247, 'j': 0.00493, 'k': 0.00011, 'l': 0.04967, 'm': 0.03157, 'n': 0.06712, 'o': 0.08683, 'p': 0.02510, 'q': 0.00877, 'r': 0.06870, 's': 0.07977, 't': 0.04632, 'u': 0.03927, 'v': 0.01138, 'w': 0.00017, 'x': 0.00215, 'y': 0.01008, 'z': 0.00467};
 
     async function generarSHA256(mensaje) {
@@ -150,28 +151,39 @@ const MotorCifrado = (function() {
     }
 
     /* -------------------------------------------------------------
-       MÓDULO AES (OpenSSL Compatible via CryptoJS)
+       MÓDULOS DE CIFRADO MODERNO (CryptoJS)
     ------------------------------------------------------------- */
     function descifrarAES(textoCifradoBase64, password) {
         try {
-            // CryptoJS decodifica nativamente archivos encriptados con openssl (Salted__)
             const bytes = CryptoJS.AES.decrypt(textoCifradoBase64.trim(), password);
             const textoClaro = bytes.toString(CryptoJS.enc.Utf8);
             if (!textoClaro) throw new Error("Llave incorrecta o formato inválido.");
             return textoClaro;
         } catch (e) {
-            throw new Error("Fallo al descifrar AES. Verifica la contraseña y que el archivo se haya leído bien.");
+            throw new Error("Fallo al descifrar AES. Verifica la contraseña y la integridad del archivo.");
         }
     }
 
-    function cifrarAES(textoPlano, password) {
-        if (!password) throw new Error("Necesitas ingresar una contraseña para cifrar en AES.");
-        // Devuelve el string Base64 compatible con OpenSSL
-        return CryptoJS.AES.encrypt(textoPlano, password).toString();
-    }
+    // MAPA DE ALGORITMOS DE SALIDA
+    const codificadoresSalida = {
+        // Modernos Simétricos
+        'AES': (texto, clave) => { if(!clave) throw new Error("Clave requerida para AES"); return CryptoJS.AES.encrypt(texto, clave).toString(); },
+        'TripleDES': (texto, clave) => { if(!clave) throw new Error("Clave requerida para 3DES"); return CryptoJS.TripleDES.encrypt(texto, clave).toString(); },
+        'Rabbit': (texto, clave) => { if(!clave) throw new Error("Clave requerida para Rabbit"); return CryptoJS.Rabbit.encrypt(texto, clave).toString(); },
+        'RC4': (texto, clave) => { if(!clave) throw new Error("Clave requerida para RC4"); return CryptoJS.RC4.encrypt(texto, clave).toString(); },
+        // Clásicos y Codificaciones
+        'Base64': (texto) => btoa(String.fromCodePoint(...new TextEncoder().encode(texto))),
+        'Hexadecimal': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(16).padStart(2, '0')).join(''),
+        'Binario': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(2).padStart(8, '0')).join(''),
+        'Reverso': (texto) => texto.split('').reverse().join(''),
+        'ROT13': (texto) => decodificadores.find(d => d.nombre === 'ROT13').decodificar(texto),
+        'Atbash': (texto) => decodificadores.find(d => d.nombre === 'Atbash').decodificar(texto),
+        'Cesar': (texto, clave) => cifrarCesar(texto, parseInt(clave) || 0),
+        'XOR': (texto, clave) => xorUnByte(texto, parseInt(clave) || 0)
+    };
 
     /* -------------------------------------------------------------
-       MÓDULO RSA (Estándar PKCS#8 / SPKI)
+       MÓDULO RSA (Estándar PKCS#8 / SPKI vía Web Crypto API)
     ------------------------------------------------------------- */
     function arrayBufferToPem(buffer, type) {
         const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -206,18 +218,6 @@ const MotorCifrado = (function() {
         const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, data);
         return btoa(String.fromCharCode(...new Uint8Array(signature)));
     }
-
-    const codificadoresSalida = {
-        'AES': (texto, clave) => cifrarAES(texto, clave),
-        'Base64': (texto) => btoa(String.fromCodePoint(...new TextEncoder().encode(texto))),
-        'Hexadecimal': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(16).padStart(2, '0')).join(''),
-        'Binario': (texto) => Array.from(new TextEncoder().encode(texto)).map(b => b.toString(2).padStart(8, '0')).join(''),
-        'Reverso': (texto) => texto.split('').reverse().join(''),
-        'ROT13': (texto) => decodificadores.find(d => d.nombre === 'ROT13').decodificar(texto),
-        'Atbash': (texto) => decodificadores.find(d => d.nombre === 'Atbash').decodificar(texto),
-        'Cesar': (texto, clave) => cifrarCesar(texto, parseInt(clave) || 0),
-        'XOR': (texto, clave) => xorUnByte(texto, parseInt(clave) || 0)
-    };
 
     async function cifrarSalida(texto, metodo, clave) {
         if (!codificadoresSalida[metodo]) throw new Error('Método no soportado');

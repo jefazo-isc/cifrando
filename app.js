@@ -50,21 +50,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const pass = aesPassword.value.trim();
         const texto = entrada.value.trim();
         if (!pass || !texto) {
-            alert("Necesitas subir el archivo cifrado y poner la contraseña.");
+            alert("Requiere un payload cifrado y la clave simétrica.");
             return;
         }
         try {
             const decodificado = MotorCifrado.descifrarAES(texto, pass);
             textoBaseSalida.value = decodificado;
-            btnFeedback(btnDescifrarAes, "¡AES ROMPIDO!");
+            btnFeedback(btnDescifrarAes, "¡Descifrado Exitoso!");
             actualizarSalidaFinal();
-            document.getElementById('fase-salida').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('modulo-salida').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
             alert(e.message);
         }
     });
 
-    // LECTURA DE ARCHIVO (PROTECCIÓN CONTRA BINARIOS AES)
+    // LECTURA DE ARCHIVO (PROTECCIÓN CONTRA BINARIOS)
     archivoEntrada.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const buffer = evento.target.result;
             const bytes = new Uint8Array(buffer);
             
-            // Heurística simple para saber si es un archivo de texto o binario (OpenSSL)
             let esTexto = true;
             for(let i = 0; i < Math.min(bytes.length, 500); i++) {
                 if(bytes[i] === 0 || (bytes[i] < 32 && bytes[i] !== 9 && bytes[i] !== 10 && bytes[i] !== 13)) {
@@ -87,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (esTexto) {
                 contenido = new TextDecoder('utf-8').decode(bytes);
             } else {
-                // Es un binario crudo. Convertir a Base64 para que el navegador y CryptoJS lo manejen sin corromperlo.
                 let binary = '';
                 for (let i = 0; i < bytes.byteLength; i++) {
                     binary += String.fromCharCode(bytes[i]);
@@ -101,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
             verificarIntegridad();
             procesarEntrada();
         };
-        // Leemos como ArrayBuffer para no destruir los bytes en caso de que sea AES binario
         reader.readAsArrayBuffer(file);
     });
 
@@ -109,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const texto = entrada.value;
         if (texto === '') {
             estadoIntegridad.className = 'estado-integridad neutro';
-            estadoIntegridad.textContent = 'Esperando archivo o texto...';
+            estadoIntegridad.textContent = 'Esperando flujo de datos...';
             return;
         }
 
@@ -122,13 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (esperado === '') {
             estadoIntegridad.className = 'estado-integridad neutro';
-            estadoIntegridad.innerHTML = `<strong>Hash calculado:</strong> ${hashCalculadoBase}`;
+            estadoIntegridad.innerHTML = `<strong>Hash SHA-256:</strong> ${hashCalculadoBase}`;
         } else if (esperado === hashCalculadoBase) {
             estadoIntegridad.className = 'estado-integridad valido';
-            estadoIntegridad.innerHTML = `<strong>✓ INTEGRIDAD CONFIRMADA:</strong> El hash coincide.`;
+            estadoIntegridad.innerHTML = `<strong>✓ INTEGRIDAD VERIFICADA:</strong> El hash coincide con el esperado.`;
         } else {
             estadoIntegridad.className = 'estado-integridad invalido';
-            estadoIntegridad.innerHTML = `<strong>❌ ADVERTENCIA:</strong> El hash calculado (${hashCalculadoBase}) NO coincide con el esperado.`;
+            estadoIntegridad.innerHTML = `<strong>❌ ALERTA DE CORRUPCIÓN:</strong> El hash calculado (${hashCalculadoBase}) difiere.`;
         }
     }
 
@@ -137,13 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
         verificarIntegridad();
 
         if (texto === '') {
-            monitor.innerHTML = '<div class="mensaje-espera">El análisis aparecerá aquí en cuanto subas datos.</div>';
+            monitor.innerHTML = '<div class="mensaje-espera">El análisis heurístico se mostrará aquí.</div>';
             contador.textContent = '0 resultados procesados';
             resultadosCompletos = [];
             return;
         }
 
-        monitor.innerHTML = '<span style="color: var(--primary); font-weight: bold; padding: 20px; display: block;">Analizando firmas y heurística...</span>';
+        monitor.innerHTML = '<span style="color: var(--primary); font-weight: bold; padding: 20px; display: block;">Ejecutando motores de análisis heurístico...</span>';
         resultadosCompletos = await MotorCifrado.autoDescubrir(texto);
         aplicarFiltros();
     }
@@ -156,10 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderizarResultados(resultados) {
-        contador.textContent = `${resultados.length} resultados mostrados`;
+        contador.textContent = `${resultados.length} iteraciones procesadas`;
         
         if (resultados.length === 0) {
-            monitor.innerHTML = '<div style="color: var(--danger); padding: 15px; border: 1px solid var(--danger); border-radius: 6px; background: var(--danger-bg);">No se encontró heurística clásica. Si el examen es moderno, usa el Paso 3 (AES).</div>';
+            monitor.innerHTML = '<div style="color: var(--danger); padding: 15px; border: 1px solid var(--danger); border-radius: 6px; background: var(--danger-bg);">No se encontraron patrones clásicos reconocibles. Considera el uso del Módulo Simétrico.</div>';
             return;
         }
 
@@ -167,14 +164,14 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < resultados.length; i++) {
             const res = resultados[i];
             let claseConfianza = 'confianza-baja';
-            let badge = '<span class="badge badge-baja">Ruido</span>';
+            let badge = '<span class="badge badge-baja">Ruido Estocástico</span>';
             
             if (res.puntuacion >= 25) {
                 claseConfianza = 'confianza-alta';
-                badge = '<span class="badge badge-alta">Alta Probabilidad</span>';
+                badge = '<span class="badge badge-alta">Alta Confianza</span>';
             } else if (res.puntuacion >= 15) {
                 claseConfianza = 'confianza-media';
-                badge = '<span class="badge badge-media">Posible</span>';
+                badge = '<span class="badge badge-media">Confianza Media</span>';
             }
 
             htmlSalida += `
@@ -182,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="resultado-header">
                         <div>
                             <strong>${res.metodo}</strong>
-                            <span style="font-size: 0.7rem; color: #888; margin-left: 10px;">Score: ${res.puntuacion.toFixed(1)}</span>
+                            <span style="font-size: 0.7rem; color: #888; margin-left: 10px;">Score Heurístico: ${res.puntuacion.toFixed(1)}</span>
                         </div>
                         <div>${badge}</div>
                     </div>
@@ -191,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span><strong>SHA-256:</strong> ${res.sha256}</span>
                         <div>
                             <button class="btn-accion-chico btn-copiar" data-copy="${escapeHtml(res.texto)}">Copiar</button>
-                            <button class="btn-accion-chico btn-usar" data-idx="${i}" style="background: var(--success); margin-left: 5px;">Al Paso 5</button>
+                            <button class="btn-accion-chico btn-usar" data-idx="${i}" style="background: var(--success); margin-left: 5px;">Enviar al Editor</button>
                         </div>
                     </div>
                 </div>
@@ -211,14 +208,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', (e) => {
                 const idx = e.target.getAttribute('data-idx');
                 textoBaseSalida.value = resultadosCompletos[idx].texto;
-                btnFeedback(e.target, '¡Seleccionado!');
+                btnFeedback(e.target, '¡Cargado!');
                 actualizarSalidaFinal();
-                document.getElementById('fase-salida').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('modulo-salida').scrollIntoView({ behavior: 'smooth' });
             });
         });
     }
 
-    // FASE 5 LÓGICA (Ensamblaje final)
     async function actualizarSalidaFinal() {
         let textoCompleto = textoBaseSalida.value;
         if (!textoCompleto) {
@@ -230,14 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (usarRsaCheck.checked) {
             const pem = rsaPrivada.value.trim();
             if (!pem.includes('BEGIN PRIVATE KEY')) {
-                payloadFinal.value = 'ERROR: Ingresa una llave privada válida en formato PEM en el Paso 1.';
+                payloadFinal.value = 'ERROR: Se requiere una llave privada RSA válida (PEM) en el Módulo Asimétrico.';
                 return;
             }
             try {
                 const firmaCriptografica = await MotorCifrado.firmarMensajeRSA(textoCompleto, pem);
                 textoCompleto += `\n\n-----BEGIN RSA SIGNATURE-----\n${firmaCriptografica}\n-----END RSA SIGNATURE-----`;
             } catch (error) {
-                payloadFinal.value = 'ERROR en RSA: Llave privada corrupta o no compatible.';
+                payloadFinal.value = 'ERROR en RSA: Llave privada corrupta o formato incompatible.';
                 return;
             }
         }
@@ -250,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             payloadFinal.value = resultado.cifrado;
             hashFinal.textContent = resultado.hash;
         } catch (e) {
-            payloadFinal.value = 'Error al cifrar: ' + e.message;
+            payloadFinal.value = 'Error de procesamiento: ' + e.message;
             hashFinal.textContent = '-';
         }
     }
@@ -287,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     metodoSalida.addEventListener('change', () => {
         const v = metodoSalida.value;
-        if (v === 'Cesar' || v === 'XOR' || v === 'AES') {
+        if (['AES', 'TripleDES', 'Rabbit', 'RC4', 'Cesar', 'XOR'].includes(v)) {
             contenedorClaveSalida.style.display = 'block';
         } else {
             contenedorClaveSalida.style.display = 'none';
@@ -309,12 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `examen_resuelto_${Date.now()}.txt`;
+        a.download = `documento_cifrado_${Date.now()}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        btnFeedback(btnDescargarFinal, '¡Descargado!');
+        btnFeedback(btnDescargarFinal, '¡Exportado!');
     });
 
     procesarEntrada();
