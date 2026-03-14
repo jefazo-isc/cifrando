@@ -1,172 +1,195 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoSuite | Plataforma Criptográfica Avanzada</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoSuite Pro | Versión Git</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-    <div class="header-principal">
-        <h1>CRYPTOSUITE PRO</h1>
-        <p>Plataforma integral de Cifrado Simétrico, Asimétrico (RSA) y Análisis Heurístico.</p>
-    </div>
+<body class="theme-git">
+  <div class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">VERSIÓN PARA PUSH</p>
+        <h1>CryptoSuite Pro</h1>
+        <p class="hero-copy">Rama visual oscura para subir al repositorio. Incluye heurística clásica, firma RSA y el nuevo módulo de sustitución con alfabeto personalizado.</p>
+      </div>
+      <div class="hero-badge">Git Ready</div>
+    </header>
 
-    <div class="container">
-        
-        <div class="module-card">
-            <div class="module-badge">Módulo Asimétrico (Web Crypto API)</div>
-            <div class="module-header">Gestión de Llaves RSA y Firmas Digitales</div>
-            <div class="module-content">
-                <p class="instruccion">Genera pares de llaves seguras (2048-bit) o importa tus llaves PEM existentes.</p>
-                <button class="btn-primary" id="btn-generar-rsa">Generar Nuevo Par de Llaves RSA</button>
-                <div class="grid-2-col">
-                    <div>
-                        <label>Llave Privada (Firma y Descifrado):</label>
-                        <textarea id="rsa-privada" rows="4" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
-                    </div>
-                    <div>
-                        <label>Llave Pública (Verificación):</label>
-                        <textarea id="rsa-publica" rows="4" placeholder="-----BEGIN PUBLIC KEY-----"></textarea>
-                    </div>
-                </div>
-            </div>
+    <main class="grid-layout">
+      <section class="card span-2">
+        <div class="section-title-row">
+          <div>
+            <p class="section-tag">01</p>
+            <h2>Ingesta y verificación</h2>
+          </div>
+          <button id="btn-analizar" class="btn-primary">Analizar entrada</button>
         </div>
-
-        <div class="flecha-separador">⚬</div>
-
-        <div class="module-card">
-            <div class="module-badge">Módulo de Ingesta</div>
-            <div class="module-header">Carga de Datos y Verificación de Integridad</div>
-            <div class="module-content">
-                <p class="instruccion">Carga archivos seguros o ingresa texto plano/Base64 para su análisis.</p>
-                
-                <div class="form-group">
-                    <label>Cargar archivo de datos:</label>
-                    <input type="file" id="archivo-entrada" class="file-input">
-                </div>
-                
-                <div class="form-group">
-                    <label>Checksum SHA-256 esperado (Opcional):</label>
-                    <input type="text" id="hash-esperado" class="text-input" placeholder="Ej: a591a6d4...">
-                </div>
-
-                <div id="estado-integridad" class="estado-integridad neutro">Esperando flujo de datos...</div>
-
-                <div class="form-group mt-15">
-                    <label>Entrada de datos manual:</label>
-                    <textarea id="texto-entrada" rows="3" placeholder="Ingresa texto plano, Base64 o binarios codificados..."></textarea>
-                </div>
-            </div>
+        <div class="field-grid two">
+          <label class="field">
+            <span>Archivo de entrada</span>
+            <input id="archivo-entrada" type="file" />
+          </label>
+          <label class="field">
+            <span>Checksum SHA-256 esperado</span>
+            <input id="hash-esperado" type="text" placeholder="Opcional" />
+          </label>
         </div>
+        <label class="field">
+          <span>Texto de entrada</span>
+          <textarea id="texto-entrada" rows="8" placeholder="Pega la cadena cifrada o el payload aquí"></textarea>
+        </label>
+        <div id="estado-integridad" class="status-pill" data-state="neutral">Esperando flujo de datos…</div>
+      </section>
 
-        <div class="flecha-separador">⚬</div>
-
-        <div class="module-card aes-card">
-            <div class="module-badge aes-badge">Módulo Simétrico (CryptoJS)</div>
-            <div class="module-header">Descifrado de Alto Nivel</div>
-            <div class="module-content">
-                <p class="instruccion">Procesa cifrados simétricos modernos proveídos por OpenSSL o herramientas estándar.</p>
-                <div class="grid-2-col">
-                    <div class="form-group">
-                        <label>Clave de Descifrado (Passphrase):</label>
-                        <input type="text" id="aes-password" class="text-input" placeholder="Ingresa la clave segura...">
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: flex-end;">
-                        <button class="btn-primary" id="btn-descifrar-aes" style="background: #dc2626; margin-bottom: 0;">Ejecutar Descifrado AES</button>
-                    </div>
-                </div>
-            </div>
+      <section class="card">
+        <div class="section-title-row compact">
+          <div>
+            <p class="section-tag">02</p>
+            <h2>AES rápido</h2>
+          </div>
         </div>
+        <label class="field">
+          <span>Clave AES</span>
+          <input id="aes-password" type="password" placeholder="Passphrase" />
+        </label>
+        <button id="btn-descifrar-aes" class="btn-secondary full">Descifrar payload AES</button>
+        <p class="helper-text">Usa este botón solo si el texto de entrada fue generado como JSON AES por esta misma herramienta.</p>
+      </section>
 
-        <div class="flecha-separador">⚬</div>
-
-        <div class="module-card">
-            <div class="module-badge">Módulo Heurístico</div>
-            <div class="module-header">Análisis de Patrones y Criptografía Clásica</div>
-            <div class="module-content">
-                <div class="form-group">
-                    <label>Alfabeto de Análisis (Customizable):</label>
-                    <input type="text" id="alfabeto-custom" class="text-input" value="{}éÉáíóúñÑ¿ÁÍÓÚABCDEFGHIJKLMNOPQRSTUVWXYZ!#$()*+,-./:;<>?@_abcdefghijklmnopqrstuvwxyz0123456789">
-                </div>
-                <div class="panel-control-inline">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="mostrar-todos"> Mostrar análisis de baja confianza
-                    </label>
-                    <span id="contador-resultados" class="contador">0 resultados</span>
-                </div>
-                <div id="monitor-resultados" class="monitor-blanco"></div>
-            </div>
+      <section class="card">
+        <div class="section-title-row compact">
+          <div>
+            <p class="section-tag">03</p>
+            <h2>RSA</h2>
+          </div>
         </div>
+        <button id="btn-generar-rsa" class="btn-secondary full">Generar par RSA</button>
+        <label class="toggle-line">
+          <input id="usar-rsa" type="checkbox" />
+          <span>Anexar firma digital al exportar</span>
+        </label>
+        <label class="field">
+          <span>Llave privada</span>
+          <textarea id="rsa-privada" rows="5" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
+        </label>
+        <label class="field">
+          <span>Llave pública</span>
+          <textarea id="rsa-publica" rows="5" placeholder="-----BEGIN PUBLIC KEY-----"></textarea>
+        </label>
+      </section>
 
-        <div class="flecha-separador">⚬</div>
-
-        <div class="module-card highlight-card" id="modulo-salida">
-            <div class="module-badge">Módulo de Procesamiento</div>
-            <div class="module-header">Editor de Mensajes y Empaquetado Final</div>
-            <div class="module-content">
-                <p class="instruccion">Prepara tu información, aplica firmas digitales y exporta el contenedor cifrado.</p>
-                
-                <div class="form-group">
-                    <label>Buffer de salida (Texto Plano):</label>
-                    <textarea id="texto-base-salida" rows="6" placeholder="Edita el documento a cifrar..."></textarea>
-                </div>
-
-                <div class="caja-firma">
-                    <label class="checkbox-label font-bold">
-                        <input type="checkbox" id="usar-rsa"> Anexar Firma Digital (RSA-SHA256)
-                    </label>
-                    <p class="texto-ayuda">Genera un sello criptográfico de no repudio usando la llave privada cargada.</p>
-                </div>
-
-                <div class="grid-2-col mt-15">
-                    <div class="form-group">
-                        <label>Algoritmo de Salida:</label>
-                        <select id="metodo-salida" class="text-input select-input">
-                            <optgroup label="Cifrado Moderno">
-                                <option value="AES">AES-256 (Advanced Encryption Standard)</option>
-                                <option value="TripleDES">TripleDES (3DES)</option>
-                                <option value="Rabbit">Rabbit Stream Cipher</option>
-                                <option value="RC4">RC4 (Rivest Cipher 4)</option>
-                            </optgroup>
-                            <optgroup label="Codificación y Clásicos">
-                                <option value="Base64">Base64</option>
-                                <option value="Hexadecimal">Hexadecimal</option>
-                                <option value="Binario">Binario (8 bits)</option>
-                                <option value="ROT13">ROT13</option>
-                                <option value="Atbash">Atbash</option>
-                                <option value="Cesar">César Modificable</option>
-                                <option value="XOR">XOR Operacional</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <div class="form-group" id="contenedor-clave-salida" style="display: block;">
-                        <label>Llave / Vector / Shift:</label>
-                        <input type="text" id="clave-salida" class="text-input" placeholder="Requerido para algoritmos con llave..." value="">
-                    </div>
-                </div>
-
-                <div class="resultado-final-panel">
-                    <label>Contenedor Cifrado Exportable:</label>
-                    <textarea id="payload-final" rows="4" readonly class="textarea-final"></textarea>
-                    
-                    <div class="acciones-finales">
-                        <div class="hash-box">
-                            <strong>SHA-256:</strong> <span id="hash-final">-</span>
-                        </div>
-                        <div class="botones-finales">
-                            <button class="btn-secondary" id="btn-copiar-final">Copiar Portapapeles</button>
-                            <button class="btn-success" id="btn-descargar-final">Exportar Archivo</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <section class="card span-2">
+        <div class="section-title-row">
+          <div>
+            <p class="section-tag">04</p>
+            <h2>Análisis heurístico</h2>
+          </div>
+          <label class="toggle-line inline">
+            <input id="mostrar-todos" type="checkbox" />
+            <span>Mostrar todos</span>
+          </label>
         </div>
+        <div class="section-meta">
+          <span id="contador-resultados">0 resultados</span>
+        </div>
+        <div id="monitor-resultados" class="results-panel"></div>
+      </section>
 
-    </div>
+      <section class="card span-2 accent-card">
+        <div class="section-title-row">
+          <div>
+            <p class="section-tag">05</p>
+            <h2>Sustitución personalizada</h2>
+          </div>
+        </div>
+        <p class="helper-text">Este módulo resuelve el caso de tus cadenas: pegas el alfabeto plano y el alfabeto cifrado, luego traduces en ambos sentidos.</p>
+        <div class="field-grid two">
+          <label class="field">
+            <span>Alfabeto origen (texto plano)</span>
+            <textarea id="alfabeto-origen" rows="5" placeholder="Pega aquí el alfabeto base"></textarea>
+            <small id="meta-origen">0 caracteres</small>
+          </label>
+          <label class="field">
+            <span>Alfabeto destino (texto cifrado)</span>
+            <textarea id="alfabeto-destino" rows="5" placeholder="Pega aquí la cadena que define el alfabeto cifrado"></textarea>
+            <small id="meta-destino">0 caracteres</small>
+          </label>
+        </div>
+        <div class="row-actions wrap">
+          <button id="btn-extraer-origen" class="btn-tertiary">Extraer únicos → origen</button>
+          <button id="btn-extraer-destino" class="btn-tertiary">Extraer únicos → destino</button>
+          <button id="btn-intercambiar" class="btn-tertiary">Intercambiar alfabetos</button>
+        </div>
+        <div id="estado-mapeo" class="status-pill" data-state="neutral">Pega o extrae los alfabetos para habilitar el traductor.</div>
 
-    <script src="cipher.js"></script>
-    <script src="app.js"></script>
+        <div class="field-grid two">
+          <label class="field">
+            <span>Texto a traducir</span>
+            <textarea id="texto-sustitucion-entrada" rows="7" placeholder="Pega el texto cifrado o plano"></textarea>
+          </label>
+          <label class="field">
+            <span>Resultado</span>
+            <textarea id="texto-sustitucion-salida" rows="7" placeholder="Aquí aparece la traducción" readonly></textarea>
+          </label>
+        </div>
+        <div class="row-actions wrap">
+          <button id="btn-descifrar-personalizado" class="btn-primary">Descifrar destino → origen</button>
+          <button id="btn-cifrar-personalizado" class="btn-secondary">Cifrar origen → destino</button>
+          <button id="btn-copiar-sustitucion" class="btn-tertiary">Copiar resultado</button>
+          <button id="btn-enviar-editor" class="btn-tertiary">Enviar al editor</button>
+        </div>
+      </section>
+
+      <section id="modulo-salida" class="card span-2">
+        <div class="section-title-row">
+          <div>
+            <p class="section-tag">06</p>
+            <h2>Editor y exportación</h2>
+          </div>
+        </div>
+        <label class="field">
+          <span>Buffer de salida</span>
+          <textarea id="texto-base-salida" rows="8" placeholder="Aquí cae el texto final antes de exportarlo"></textarea>
+        </label>
+        <div class="field-grid three">
+          <label class="field">
+            <span>Método de salida</span>
+            <select id="metodo-salida">
+              <option value="Base64">Base64</option>
+              <option value="Hexadecimal">Hexadecimal</option>
+              <option value="Binario">Binario</option>
+              <option value="Reverso">Reverso</option>
+              <option value="ROT13">ROT13</option>
+              <option value="Atbash">Atbash</option>
+              <option value="Cesar">César</option>
+              <option value="XOR">XOR</option>
+              <option value="AES">AES-GCM</option>
+            </select>
+          </label>
+          <label id="contenedor-clave-salida" class="field" hidden>
+            <span>Clave / shift</span>
+            <input id="clave-salida" type="text" placeholder="Clave o desplazamiento" />
+          </label>
+          <div class="field static-field">
+            <span>SHA-256 salida</span>
+            <strong id="hash-final">-</strong>
+          </div>
+        </div>
+        <label class="field">
+          <span>Contenedor cifrado exportable</span>
+          <textarea id="payload-final" rows="8" readonly></textarea>
+        </label>
+        <div class="row-actions wrap">
+          <button id="btn-copiar-final" class="btn-primary">Copiar</button>
+          <button id="btn-descargar-final" class="btn-secondary">Descargar</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="cipher.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
