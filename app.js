@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const archivoEntrada = document.getElementById('archivo-entrada');
+  const dropZone = document.getElementById('drop-zone');
   const entrada = document.getElementById('texto-entrada');
   const hashEsperadoInput = document.getElementById('hash-esperado');
   const estadoIntegridad = document.getElementById('estado-integridad');
@@ -43,6 +44,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let resultadosCompletos = [];
   let hashCalculadoBase = '';
 
+  // Auto-resize de textareas
+  function autoResize() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  }
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('input', autoResize);
+  });
+
+  // Sistema de Notificaciones (Toast)
+  function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
   function setStatus(el, text, mode = 'neutral') {
     if (!el) return;
     el.textContent = text;
@@ -60,14 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function btnFeedback(target, msg = '¡Listo!') {
     if (!target) return;
-    const original = target.dataset.originalText || target.textContent;
-    target.dataset.originalText = original;
-    target.textContent = msg;
     target.disabled = true;
+    showToast(msg);
     setTimeout(() => {
-      target.textContent = original;
       target.disabled = false;
-    }, 1400);
+    }, 1000);
   }
 
   async function verificarIntegridad() {
@@ -137,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', async e => {
         const texto = decodeURIComponent(e.currentTarget.getAttribute('data-copy'));
         await navigator.clipboard.writeText(texto);
-        btnFeedback(e.currentTarget, 'Copiado');
+        btnFeedback(e.currentTarget, 'Texto copiado al portapapeles');
       });
     });
 
@@ -145,8 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', e => {
         const idx = Number(e.currentTarget.getAttribute('data-idx'));
         textoBaseSalida.value = resultados[idx].texto;
+        autoResize.call(textoBaseSalida);
         actualizarSalidaFinal();
-        btnFeedback(e.currentTarget, 'Cargado');
+        btnFeedback(e.currentTarget, 'Payload enviado al editor');
       });
     });
   }
@@ -200,6 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cargarExtraido(inputFuente, inputDestino) {
     inputDestino.value = MotorCifrado.extraerAlfabetoUnico(inputFuente.value);
+    autoResize.call(inputDestino);
     actualizarEstadoMapeo();
   }
 
@@ -218,8 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
         : MotorCifrado.cifrarSustitucionPersonalizada(texto, alfabetoOrigen.value, alfabetoDestino.value);
 
       textoSustitucionSalida.value = salida;
+      autoResize.call(textoSustitucionSalida);
+      showToast('Sustitución ejecutada correctamente');
     } catch (error) {
       textoSustitucionSalida.value = `Error: ${error.message}`;
+      showToast('Error durante la sustitución');
     }
   }
 
@@ -256,11 +284,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const resultado = await MotorCifrado.cifrarSalida(textoCompleto, metodo, clave);
       payloadFinal.value = resultado.cifrado;
       hashFinal.textContent = resultado.hash;
+      autoResize.call(payloadFinal);
     } catch (error) {
       payloadFinal.value = `Error de procesamiento: ${error.message}`;
       hashFinal.textContent = '-';
     }
   }
+
+  // Manejo de la Zona de Drag & Drop
+  dropZone.addEventListener('click', () => archivoEntrada.click());
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      archivoEntrada.files = e.dataTransfer.files;
+      archivoEntrada.dispatchEvent(new Event('change'));
+    }
+  });
 
   btnAnalizar.addEventListener('click', procesarEntrada);
   mostrarTodosCheck.addEventListener('change', aplicarFiltros);
@@ -275,9 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = String(e.target.result || '');
       entrada.value = text;
       textoSustitucionEntrada.value = text;
+      
+      autoResize.call(entrada);
+      autoResize.call(textoSustitucionEntrada);
+
       archivoEntrada.dataset.lastTextRead = text;
       hashCalculadoBase = await MotorCifrado.generarSHA256(text);
       await procesarEntrada();
+      showToast(`Archivo procesado: ${file.name}`);
     };
     reader.readAsText(file);
   });
@@ -289,10 +339,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const decodificado = await MotorCifrado.descifrarAES(payload, pass);
       textoBaseSalida.value = decodificado;
-      btnFeedback(btnDescifrarAes, 'Descifrado');
+      autoResize.call(textoBaseSalida);
+      btnFeedback(btnDescifrarAes, 'Carga AES descifrada exitosamente');
       actualizarSalidaFinal();
     } catch (error) {
-      alert(error.message);
+      showToast(error.message);
     }
   });
 
@@ -300,7 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const claves = await MotorCifrado.generarLlavesRSA();
     rsaPrivada.value = claves.privada;
     rsaPublica.value = claves.publica;
-    btnFeedback(btnGenerarRsa, 'Generadas');
+    autoResize.call(rsaPrivada);
+    autoResize.call(rsaPublica);
+    btnFeedback(btnGenerarRsa, 'Nuevo par de llaves RSA generado');
     actualizarSalidaFinal();
   });
 
@@ -315,19 +368,22 @@ document.addEventListener('DOMContentLoaded', () => {
     alfabetoOrigen.value = alfabetoDestino.value;
     alfabetoDestino.value = tmp;
     actualizarEstadoMapeo();
-    btnFeedback(btnIntercambiar, 'Intercambiado');
+    btnFeedback(btnIntercambiar, 'Alfabetos intercambiados');
   });
   btnDescifrarPersonalizado.addEventListener('click', () => ejecutarSustitucion('decode'));
   btnCifrarPersonalizado.addEventListener('click', () => ejecutarSustitucion('encode'));
+  
   btnCopiarSustitucion.addEventListener('click', async () => {
     if (!textoSustitucionSalida.value) return;
     await navigator.clipboard.writeText(textoSustitucionSalida.value);
-    btnFeedback(btnCopiarSustitucion, 'Copiado');
+    btnFeedback(btnCopiarSustitucion, 'Traducción copiada al portapapeles');
   });
+  
   btnEnviarEditor.addEventListener('click', () => {
     textoBaseSalida.value = textoSustitucionSalida.value;
+    autoResize.call(textoBaseSalida);
     actualizarSalidaFinal();
-    btnFeedback(btnEnviarEditor, 'Enviado');
+    btnFeedback(btnEnviarEditor, 'Enviado al editor base');
   });
 
   textoBaseSalida.addEventListener('input', actualizarSalidaFinal);
@@ -341,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnCopiarFinal.addEventListener('click', async () => {
     if (!payloadFinal.value) return;
     await navigator.clipboard.writeText(payloadFinal.value);
-    btnFeedback(btnCopiarFinal, 'Copiado');
+    btnFeedback(btnCopiarFinal, 'Payload final copiado');
   });
 
   btnDescargarFinal.addEventListener('click', () => {
@@ -355,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    btnFeedback(btnDescargarFinal, 'Descargado');
+    btnFeedback(btnDescargarFinal, 'Descarga iniciada');
   });
 
   textoSustitucionEntrada.value = entrada.value;
