@@ -12,7 +12,7 @@
       <div>
         <p class="eyebrow">VERSIÓN PARA PUSH</p>
         <h1>CryptoSuite Pro</h1>
-        <p class="hero-copy">Rama visual oscura para subir al repositorio. Incluye heurística clásica, firma RSA y el nuevo módulo de sustitución con alfabeto personalizado.</p>
+        <p class="hero-copy">Herramienta de análisis criptográfico client-side. Módulos integrados de heurística clásica, gestión RSA y sustitución por alfabeto personalizado.</p>
       </div>
       <div class="hero-badge">Git Ready</div>
     </header>
@@ -28,7 +28,7 @@
         </div>
         <div class="field-grid two">
           <div class="field drop-zone" id="drop-zone">
-            <span>Arrastra un archivo aquí o haz clic para seleccionar</span>
+            <span>Área de carga de archivos (Arrastrar o clic)</span>
             <input id="archivo-entrada" type="file" style="display: none;" />
           </div>
           <label class="field">
@@ -38,7 +38,7 @@
         </div>
         <label class="field">
           <span>Texto de entrada</span>
-          <textarea id="texto-entrada" rows="8" placeholder="Pega la cadena cifrada o el payload aquí"></textarea>
+          <textarea id="texto-entrada" rows="8" placeholder="Ingresar cadena cifrada o payload"></textarea>
         </label>
         <div id="estado-integridad" class="status-pill" data-state="neutral">Esperando flujo de datos…</div>
       </section>
@@ -55,7 +55,7 @@
           <input id="aes-password" type="password" placeholder="Passphrase" />
         </label>
         <button id="btn-descifrar-aes" class="btn-secondary full">Descifrar payload AES</button>
-        <p class="helper-text">Usa este botón solo si el texto de entrada fue generado como JSON AES por esta misma herramienta.</p>
+        <p class="helper-text">Utilizar exclusivamente para descifrar estructuras JSON AES generadas por este sistema.</p>
       </section>
 
       <section class="card">
@@ -104,16 +104,16 @@
             <h2>Sustitución personalizada</h2>
           </div>
         </div>
-        <p class="helper-text">Este módulo resuelve el caso de tus cadenas: pegas el alfabeto plano y el alfabeto cifrado, luego traduces en ambos sentidos.</p>
+        <p class="helper-text">Módulo bidireccional para mapeo de caracteres. Requiere la definición estricta de los conjuntos de símbolos de origen y destino.</p>
         <div class="field-grid two">
           <label class="field">
             <span>Alfabeto origen (texto plano)</span>
-            <textarea id="alfabeto-origen" rows="5" placeholder="Pega aquí el alfabeto base"></textarea>
+            <textarea id="alfabeto-origen" rows="5" placeholder="Ingresar alfabeto base"></textarea>
             <small id="meta-origen">0 caracteres</small>
           </label>
           <label class="field">
             <span>Alfabeto destino (texto cifrado)</span>
-            <textarea id="alfabeto-destino" rows="5" placeholder="Pega aquí la cadena que define el alfabeto cifrado"></textarea>
+            <textarea id="alfabeto-destino" rows="5" placeholder="Ingresar alfabeto de sustitución"></textarea>
             <small id="meta-destino">0 caracteres</small>
           </label>
         </div>
@@ -122,16 +122,16 @@
           <button id="btn-extraer-destino" class="btn-tertiary">Extraer únicos → destino</button>
           <button id="btn-intercambiar" class="btn-tertiary">Intercambiar alfabetos</button>
         </div>
-        <div id="estado-mapeo" class="status-pill" data-state="neutral">Pega o extrae los alfabetos para habilitar el traductor.</div>
+        <div id="estado-mapeo" class="status-pill" data-state="neutral">Esperando configuración de alfabetos.</div>
 
         <div class="field-grid two">
           <label class="field">
-            <span>Texto a traducir</span>
-            <textarea id="texto-sustitucion-entrada" rows="7" placeholder="Pega el texto cifrado o plano"></textarea>
+            <span>Texto a procesar</span>
+            <textarea id="texto-sustitucion-entrada" rows="7" placeholder="Ingresar bloque de texto"></textarea>
           </label>
           <label class="field">
             <span>Resultado</span>
-            <textarea id="texto-sustitucion-salida" rows="7" placeholder="Aquí aparece la traducción" readonly></textarea>
+            <textarea id="texto-sustitucion-salida" rows="7" placeholder="Salida de la operación" readonly></textarea>
           </label>
         </div>
         <div class="row-actions wrap">
@@ -151,7 +151,7 @@
         </div>
         <label class="field">
           <span>Buffer de salida</span>
-          <textarea id="texto-base-salida" rows="8" placeholder="Aquí cae el texto final antes de exportarlo"></textarea>
+          <textarea id="texto-base-salida" rows="8" placeholder="Buffer de texto procesado previo a la exportación"></textarea>
         </label>
         <div class="field-grid three">
           <label class="field">
