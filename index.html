@@ -27,10 +27,10 @@
           <button id="btn-analizar" class="btn-primary">Analizar entrada</button>
         </div>
         <div class="field-grid two">
-          <label class="field">
-            <span>Archivo de entrada</span>
-            <input id="archivo-entrada" type="file" />
-          </label>
+          <div class="field drop-zone" id="drop-zone">
+            <span>Arrastra un archivo aquí o haz clic para seleccionar</span>
+            <input id="archivo-entrada" type="file" style="display: none;" />
+          </div>
           <label class="field">
             <span>Checksum SHA-256 esperado</span>
             <input id="hash-esperado" type="text" placeholder="Opcional" />
@@ -188,6 +188,8 @@
       </section>
     </main>
   </div>
+  
+  <div id="toast-container"></div>
 
   <script src="cipher.js"></script>
   <script src="app.js"></script>
