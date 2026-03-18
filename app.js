@@ -194,6 +194,110 @@ document.addEventListener('DOMContentLoaded', () => {
     aplicarFiltros();
   }
 
+
+document.addEventListener('DOMContentLoaded', () => {
+  const entrada = document.getElementById('texto-entrada');
+  const alfabetoOrigen = document.getElementById('alfabeto-origen');
+  const alfabetoDestino = document.getElementById('alfabeto-destino');
+  const estadoMapeo = document.getElementById('estado-mapeo');
+  const textoSustitucionEntrada = document.getElementById('texto-sustitucion-entrada');
+  const textoSustitucionSalida = document.getElementById('texto-sustitucion-salida');
+  const btnDescifrarPersonalizado = document.getElementById('btn-descifrar-personalizado');
+  
+  // Elementos de UI para mostrar info
+  const metaOrigen = document.getElementById('meta-origen');
+  const metaDestino = document.getElementById('meta-destino');
+
+  function autoResize() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  }
+  document.querySelectorAll('textarea').forEach(ta => ta.addEventListener('input', autoResize));
+
+  function setStatus(el, text, mode = 'neutral') {
+    if (!el) return;
+    el.textContent = text;
+    el.dataset.state = mode;
+  }
+
+  // --- NUEVA LÓGICA DE CRIPTOANÁLISIS ---
+
+  function rotarAlfabeto(alfabeto, k) {
+    const arr = alfabeto.split('');
+    const n = arr.length;
+    const shift = ((k % n) + n) % n;
+    const rotado = [...arr.slice(shift), ...arr.slice(0, shift)];
+    return rotado.join('');
+  }
+
+  function crackearCesarPersonalizado(texto, cadenaMaestra) {
+    let mejorTexto = "";
+    let mejorScore = -1000;
+    let mejorOrigen = "";
+    let mejorK = 0;
+
+    // Probamos todas las rotaciones posibles (0 a 130)
+    for (let k = 0; k < cadenaMaestra.length; k++) {
+      const origenPrueba = rotarAlfabeto(cadenaMaestra, k);
+      const intento = MotorCifrado.descifrarSustitucionPersonalizada(texto, origenPrueba, cadenaMaestra);
+      
+      // Usamos la función de puntuar de tu cipher.js
+      const score = MotorCifrado.autoDescubrir ? (intento.split(' ').length * 2) : 0; 
+      
+      // Heurística simple: contar vocales y espacios (común en español)
+      let currentScore = (intento.match(/[aeiouáéíóú ]/gi) || []).length;
+      
+      if (currentScore > mejorScore) {
+        mejorScore = currentScore;
+        mejorTexto = intento;
+        mejorOrigen = origenPrueba;
+        mejorK = k;
+      }
+    }
+    return { mejorTexto, mejorOrigen, mejorK };
+  }
+
+  function ejecutarSustitucion(tipo) {
+    const texto = textoSustitucionEntrada.value.trim();
+    if (!texto) return;
+
+    let destino = alfabetoDestino.value.trim();
+    let origen = alfabetoOrigen.value.trim();
+
+    // Si el usuario no puso origen, usamos el CRACKER
+    if (!origen && destino) {
+      const cleanDestino = MotorCifrado.extraerAlfabetoUnico(destino);
+      const resultado = crackearCesarPersonalizado(texto, cleanDestino);
+      
+      alfabetoOrigen.value = resultado.mejorOrigen;
+      textoSustitucionSalida.value = `[AUTO-CRACK K=${resultado.mejorK}]\n${resultado.mejorTexto}`;
+      autoResize.call(alfabetoOrigen);
+      autoResize.call(textoSustitucionSalida);
+      setStatus(estadoMapeo, `¡Código roto! Desplazamiento K=${resultado.mejorK} detectado.`, 'ok');
+      return;
+    }
+
+    // Flujo normal si ya hay alfabetos
+    try {
+      const salida = tipo === 'decode'
+        ? MotorCifrado.descifrarSustitucionPersonalizada(texto, origen, destino)
+        : MotorCifrado.cifrarSustitucionPersonalizada(texto, origen, destino);
+      textoSustitucionSalida.value = salida;
+      autoResize.call(textoSustitucionSalida);
+    } catch (e) {
+      textoSustitucionSalida.value = "Error: " + e.message;
+    }
+  }
+
+  // Listener para el botón
+  btnDescifrarPersonalizado.addEventListener('click', () => ejecutarSustitucion('decode'));
+  
+  // El resto de tus listeners de app.js se mantienen igual...
+  // (Copiar aquí el resto de tu app.js original para no perder las firmas RSA y AES)
+});
+
+
+  
   function actualizarEstadoMapeo() {
     const origen = alfabetoOrigen.value;
     const destino = alfabetoDestino.value;
