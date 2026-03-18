@@ -228,19 +228,80 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarEstadoMapeo();
   }
 
-  function ejecutarSustitucion(tipo) {
-    if (!actualizarEstadoMapeo()) return;
+  // Lógica nueva para descifrar en bloque (múltiples cadenas/textos)
+  function procesarSustitucionMasiva(textoBloque, alfabetoBase, tipo) {
+    if (!alfabetoBase) return "Error: Necesitas definir el 'Alfabeto origen' (en la caja de arriba) para que funcione el mapeo.";
+    
+    let resultados = [];
+    // Dividir el bloque en secciones, buscando la palabra "Cadena " 
+    const bloquesCadena = textoBloque.split(/(?=Cadena\s*\d+)/i);
+    
+    bloquesCadena.forEach(bloque => {
+      if (!bloque.trim()) return;
+      
+      const matchCadena = bloque.match(/^(Cadena\s*\d+)/i);
+      const nombreCadena = matchCadena ? matchCadena[1] : 'Desconocida';
+      
+      let resto = bloque.replace(/^(Cadena\s*\d+)/i, '').trim();
+      
+      // Buscar donde empieza "Texto:" ignorando mayúsculas y saltos de línea previos
+      const matchTexto = resto.match(/(?:^|\n)texto:\s*([\s\S]*)/i);
+      
+      let alfabetoDestino = resto;
+      let textoPayload = '';
+      
+      if (matchTexto) {
+          alfabetoDestino = resto.substring(0, matchTexto.index).trim();
+          textoPayload = matchTexto[1].trim();
+      }
+      
+      if (alfabetoDestino && textoPayload) {
+          try {
+            // Se eliminan posibles saltos de línea internos en el alfabeto pegado
+            alfabetoDestino = alfabetoDestino.replace(/\r?\n/g, '').trim();
+            const procesado = tipo === 'decode'
+              ? MotorCifrado.descifrarSustitucionPersonalizada(textoPayload, alfabetoBase, alfabetoDestino)
+              : MotorCifrado.cifrarSustitucionPersonalizada(textoPayload, alfabetoBase, alfabetoDestino);
+            
+            resultados.push(`--- ${nombreCadena} ---`);
+            resultados.push(`${procesado}\n`);
+          } catch (e) {
+            resultados.push(`--- ${nombreCadena} ---`);
+            resultados.push(`Error: ${e.message}\n`);
+          }
+      } else if (alfabetoDestino && !textoPayload) {
+          resultados.push(`--- ${nombreCadena} ---\n(Ignorado: Sin etiqueta de 'Texto:' para procesar)\n`);
+      }
+    });
+    
+    return resultados.join('\n');
+  }
 
-    const texto = textoSustitucionEntrada.value;
+  function ejecutarSustitucion(tipo) {
+    const texto = textoSustitucionEntrada.value.trim();
     if (!texto) {
       textoSustitucionSalida.value = '';
       return;
     }
 
+    const origen = alfabetoOrigen.value;
+    const destino = alfabetoDestino.value;
+
+    // Detectar si el usuario metió un bloque entero (modo masivo)
+    if (/(?:^|\n)Cadena\s*\d+/i.test(texto) && /(?:^|\n)texto:/i.test(texto)) {
+      textoSustitucionSalida.value = procesarSustitucionMasiva(texto, origen, tipo);
+      autoResize.call(textoSustitucionSalida);
+      showToast('Procesamiento por lotes completado');
+      return;
+    }
+
+    // Flujo normal para una sola cadena
+    if (!actualizarEstadoMapeo()) return;
+
     try {
       const salida = tipo === 'decode'
-        ? MotorCifrado.descifrarSustitucionPersonalizada(texto, alfabetoOrigen.value, alfabetoDestino.value)
-        : MotorCifrado.cifrarSustitucionPersonalizada(texto, alfabetoOrigen.value, alfabetoDestino.value);
+        ? MotorCifrado.descifrarSustitucionPersonalizada(texto, origen, destino)
+        : MotorCifrado.cifrarSustitucionPersonalizada(texto, origen, destino);
 
       textoSustitucionSalida.value = salida;
       autoResize.call(textoSustitucionSalida);
@@ -370,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarEstadoMapeo();
     btnFeedback(btnIntercambiar, 'Alfabetos intercambiados');
   });
+  
   btnDescifrarPersonalizado.addEventListener('click', () => ejecutarSustitucion('decode'));
   btnCifrarPersonalizado.addEventListener('click', () => ejecutarSustitucion('encode'));
   
