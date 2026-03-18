@@ -263,9 +263,10 @@ const MotorCifrado = (() => {
 
   function bytesToBase64(bytes) {
     let binary = '';
-    bytes.forEach(byte => {
-      binary += String.fromCharCode(byte);
-    });
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
     return btoa(binary);
   }
 
@@ -297,35 +298,67 @@ const MotorCifrado = (() => {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const aesKey = await importarClaveAesDesdePassphrase(clave, salt);
+    
     const payload = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       aesKey,
       new TextEncoder().encode(texto)
     );
 
-    return JSON.stringify({
-      mode: 'AES-GCM',
-      salt: bytesToBase64(salt),
-      iv: bytesToBase64(iv),
-      data: bytesToBase64(new Uint8Array(payload))
-    });
+    // Empaquetar Salt + IV + Payload en un solo búfer binario
+    const encryptedBytes = new Uint8Array(payload);
+    const combined = new Uint8Array(salt.length + iv.length + encryptedBytes.length);
+    combined.set(salt, 0);
+    combined.set(iv, salt.length);
+    combined.set(encryptedBytes, salt.length + iv.length);
+
+    // Retorna una única cadena compacta en Base64
+    return bytesToBase64(combined);
   }
 
   async function descifrarAES(payload, clave) {
     if (!clave) throw new Error('Clave requerida para AES');
-    let obj;
+    
+    let combined;
+    const trimPayload = payload.trim();
+    
     try {
-      obj = JSON.parse(payload);
+      // Retrocompatibilidad: Si el payload viene en el viejo formato JSON
+      if (trimPayload.startsWith('{')) {
+        const obj = JSON.parse(trimPayload);
+        const saltJson = Uint8Array.from(atob(obj.salt), c => c.charCodeAt(0));
+        const ivJson = Uint8Array.from(atob(obj.iv), c => c.charCodeAt(0));
+        const dataJson = Uint8Array.from(atob(obj.data), c => c.charCodeAt(0));
+        
+        const aesKeyJson = await importarClaveAesDesdePassphrase(clave, saltJson);
+        const plainBufferJson = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivJson }, aesKeyJson, dataJson);
+        return new TextDecoder().decode(plainBufferJson);
+      }
+
+      // Nuevo flujo: Desempaquetar la cadena Base64 única
+      const binaryString = atob(trimPayload);
+      combined = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        combined[i] = binaryString.charCodeAt(i);
+      }
     } catch (e) {
-      throw new Error('El payload AES debe estar en formato JSON generado por esta herramienta.');
+      throw new Error('El payload AES no tiene un formato Base64 o JSON válido.');
     }
 
-    const salt = Uint8Array.from(atob(obj.salt), c => c.charCodeAt(0));
-    const iv = Uint8Array.from(atob(obj.iv), c => c.charCodeAt(0));
-    const data = Uint8Array.from(atob(obj.data), c => c.charCodeAt(0));
+    if (combined.length < 28) throw new Error('Payload corrupto o demasiado corto.');
+
+    // Extraer en orden: Salt (16 bytes), IV (12 bytes) y los datos cifrados restantes
+    const salt = combined.slice(0, 16);
+    const iv = combined.slice(16, 28);
+    const data = combined.slice(28);
+
     const aesKey = await importarClaveAesDesdePassphrase(clave, salt);
-    const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, data);
-    return new TextDecoder().decode(plainBuffer);
+    try {
+      const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, data);
+      return new TextDecoder().decode(plainBuffer);
+    } catch (e) {
+      throw new Error('Fallo al descifrar. La contraseña es incorrecta o los datos fueron alterados.');
+    }
   }
 
   const codificadoresSalida = {
