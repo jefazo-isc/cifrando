@@ -483,6 +483,46 @@ const MotorCifrado = (() => {
     return buffer.buffer;
   }
 
+
+// Nueva función para medir qué tanto se parece un texto al español
+  function calcularLegibilidad(texto) {
+    let score = 0;
+    const vocales = "aeiouáéíóú";
+    const comunes = [" de ", " el ", " la ", " que ", " en ", " los ", " se "];
+    
+    for (const char of texto.toLowerCase()) {
+      if (vocales.includes(char)) score += 2;
+      if (char === " ") score += 3;
+    }
+    comunes.forEach(palabra => {
+      if (texto.toLowerCase().includes(palabra)) score += 15;
+    });
+    return score;
+  }
+
+  // Fuerza bruta sobre una sola cadena rotándola
+  function crackearCesar(texto, cadena) {
+    let mejorTexto = "";
+    let mejorScore = -1;
+    let mejorK = 0;
+    const chars = extraerAlfabetoUnico(cadena).split('');
+    const N = chars.length;
+
+    for (let k = 0; k < N; k++) {
+      const rotado = [...chars.slice(k), ...chars.slice(0, k)].join('');
+      const intento = traducirConAlfabeto(texto, rotado, chars);
+      const actualScore = calcularLegibilidad(intento);
+      
+      if (actualScore > mejorScore) {
+        mejorScore = actualScore;
+        mejorTexto = intento;
+        mejorK = k;
+      }
+    }
+    return { texto: mejorTexto, k: mejorK };
+  }
+
+  
   async function firmarMensajeRSA(mensaje, pemPrivada) {
     const privBuffer = pemToArrayBuffer(pemPrivada);
     const privateKey = await crypto.subtle.importKey(
