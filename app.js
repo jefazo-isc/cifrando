@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let resultadosCompletos = [];
   let hashCalculadoBase = '';
 
-  // Auto-resize de textareas
   function autoResize() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
@@ -53,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ta.addEventListener('input', autoResize);
   });
 
-  // Sistema de Notificaciones (Toast)
   function showToast(msg) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -208,6 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return false;
     }
 
+    if (!origen && destino) {
+      setStatus(estadoMapeo, 'Origen en blanco. El sistema intentará adivinarlo por ordenamiento Unicode.', 'warning');
+      return true; // Permitimos avanzar para que el auto-adivinador entre en acción
+    }
+
     if (estado.ok) {
       setStatus(estadoMapeo, `Mapeo válido: ${estado.longitudOrigen} símbolos únicos por lado.`, 'ok');
       return true;
@@ -228,12 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarEstadoMapeo();
   }
 
-  // Lógica nueva para descifrar en bloque (múltiples cadenas/textos)
+  // Lógica para descifrar en bloque (múltiples cadenas/textos)
   function procesarSustitucionMasiva(textoBloque, alfabetoBase, tipo) {
-    if (!alfabetoBase) return "Error: Necesitas definir el 'Alfabeto origen' (en la caja de arriba) para que funcione el mapeo.";
-    
     let resultados = [];
-    // Dividir el bloque en secciones, buscando la palabra "Cadena " 
     const bloquesCadena = textoBloque.split(/(?=Cadena\s*\d+)/i);
     
     bloquesCadena.forEach(bloque => {
@@ -241,10 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const matchCadena = bloque.match(/^(Cadena\s*\d+)/i);
       const nombreCadena = matchCadena ? matchCadena[1] : 'Desconocida';
-      
       let resto = bloque.replace(/^(Cadena\s*\d+)/i, '').trim();
-      
-      // Buscar donde empieza "Texto:" ignorando mayúsculas y saltos de línea previos
       const matchTexto = resto.match(/(?:^|\n)texto:\s*([\s\S]*)/i);
       
       let alfabetoDestino = resto;
@@ -257,11 +254,18 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (alfabetoDestino && textoPayload) {
           try {
-            // Se eliminan posibles saltos de línea internos en el alfabeto pegado
             alfabetoDestino = alfabetoDestino.replace(/\r?\n/g, '').trim();
+            
+            // Heurística de auto-adivinar por ordenamiento Unicode si el origen viene vacío
+            let baseUsada = alfabetoBase;
+            if (!baseUsada) {
+              baseUsada = MotorCifrado.extraerAlfabetoUnico(alfabetoDestino).split('').sort().join('');
+              resultados.push(`\n[i] Alfabeto origen adivinado: ${baseUsada.substring(0, 15)}...`);
+            }
+
             const procesado = tipo === 'decode'
-              ? MotorCifrado.descifrarSustitucionPersonalizada(textoPayload, alfabetoBase, alfabetoDestino)
-              : MotorCifrado.cifrarSustitucionPersonalizada(textoPayload, alfabetoBase, alfabetoDestino);
+              ? MotorCifrado.descifrarSustitucionPersonalizada(textoPayload, baseUsada, alfabetoDestino)
+              : MotorCifrado.cifrarSustitucionPersonalizada(textoPayload, baseUsada, alfabetoDestino);
             
             resultados.push(`--- ${nombreCadena} ---`);
             resultados.push(`${procesado}\n`);
@@ -284,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const origen = alfabetoOrigen.value;
+    let origen = alfabetoOrigen.value;
     const destino = alfabetoDestino.value;
 
     // Detectar si el usuario metió un bloque entero (modo masivo)
@@ -292,10 +296,26 @@ document.addEventListener('DOMContentLoaded', () => {
       textoSustitucionSalida.value = procesarSustitucionMasiva(texto, origen, tipo);
       autoResize.call(textoSustitucionSalida);
       showToast('Procesamiento por lotes completado');
+      
+      // Auto-llenar el input de la UI si estaba vacío y lo adivinamos
+      if (!origen) {
+        const firstMatch = texto.split(/(?=Cadena\s*\d+)/i)[1];
+        if (firstMatch) {
+            let destText = firstMatch.replace(/^(Cadena\s*\d+)/i, '').split(/(?:^|\n)texto:/i)[0].replace(/\r?\n/g, '').trim();
+            alfabetoOrigen.value = MotorCifrado.extraerAlfabetoUnico(destText).split('').sort().join('');
+            actualizarEstadoMapeo();
+        }
+      }
       return;
     }
 
     // Flujo normal para una sola cadena
+    if (!origen && destino) {
+      origen = MotorCifrado.extraerAlfabetoUnico(destino).split('').sort().join('');
+      alfabetoOrigen.value = origen;
+      showToast('Alfabeto origen auto-generado por ordenamiento');
+    }
+
     if (!actualizarEstadoMapeo()) return;
 
     try {
@@ -352,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Manejo de la Zona de Drag & Drop
   dropZone.addEventListener('click', () => archivoEntrada.click());
   dropZone.addEventListener('dragover', e => {
     e.preventDefault();
