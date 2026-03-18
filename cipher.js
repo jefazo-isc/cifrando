@@ -123,6 +123,71 @@ const MotorCifrado = (() => {
     return res;
   }
 
+// ... (mismo inicio de app.js)
+
+  function actualizarEstadoMapeo() {
+    const origen = alfabetoOrigen.value;
+    const destino = alfabetoDestino.value;
+    metaOrigen.textContent = `${origen.length} caracteres`;
+    metaDestino.textContent = `${destino.length} caracteres`;
+
+    if (!origen && destino) {
+      setStatus(estadoMapeo, 'Origen vacío: Se usará reconstrucción Unicode automática.', 'warning');
+      return true;
+    }
+
+    const estado = MotorCifrado.validarAlfabetos(origen, destino);
+    if (!origen && !destino) {
+      setStatus(estadoMapeo, 'Configura los alfabetos.', 'neutral');
+      return false;
+    }
+
+    if (estado.ok) {
+      setStatus(estadoMapeo, `Mapeo válido: ${estado.longitudOrigen} símbolos únicos.`, 'ok');
+      return true;
+    }
+
+    setStatus(estadoMapeo, `Error: ${estado.duplicadosOrigen ? 'Duplicados' : 'Longitudes distintas'}.`, 'error');
+    return false;
+  }
+
+  function ejecutarSustitucion(tipo) {
+    const texto = textoSustitucionEntrada.value.trim();
+    if (!texto) return;
+
+    let origen = alfabetoOrigen.value;
+    let destino = alfabetoDestino.value;
+
+    // RECONSTRUCCIÓN AUTOMÁTICA SI ORIGEN ESTÁ VACÍO
+    if (!origen && destino) {
+      // Extraemos los caracteres únicos de la cadena del profe y los ordenamos por código Unicode
+      origen = MotorCifrado.extraerAlfabetoUnico(destino).split('').sort((a, b) => a.charCodeAt(0) - b.charCodeAt(0)).join('');
+      alfabetoOrigen.value = origen; // Lo mostramos en la caja para que el usuario vea el 'molde'
+      autoResize.call(alfabetoOrigen);
+    }
+
+    if (!actualizarEstadoMapeo()) return;
+
+    try {
+      // Si detecta bloque masivo (Cadena 1, Cadena 2...)
+      if (/(?:^|\n)Cadena\s*\d+/i.test(texto)) {
+        textoSustitucionSalida.value = procesarSustitucionMasiva(texto, origen, tipo);
+      } else {
+        const salida = tipo === 'decode'
+          ? MotorCifrado.descifrarSustitucionPersonalizada(texto, origen, destino)
+          : MotorCifrado.cifrarSustitucionPersonalizada(texto, origen, destino);
+        textoSustitucionSalida.value = salida;
+      }
+      autoResize.call(textoSustitucionSalida);
+      showToast('Operación completada');
+    } catch (error) {
+      textoSustitucionSalida.value = `Error: ${error.message}`;
+    }
+  }
+
+// ... (resto del archivo app.js se mantiene igual)
+
+  
   function cifrarCesar(texto, desplazamiento) {
     let res = '';
     let shift = Number.isFinite(Number(desplazamiento)) ? Number(desplazamiento) : 0;
@@ -255,6 +320,10 @@ const MotorCifrado = (() => {
     return traducirConAlfabeto(texto, alfabetoPlano, alfabetoCifrado, true);
   }
 
+
+
+
+  
   function descifrarSustitucionPersonalizada(texto, alfabetoPlano, alfabetoCifrado) {
     const estado = validarAlfabetos(alfabetoPlano, alfabetoCifrado);
     if (!estado.ok) throw new Error('Los alfabetos deben tener la misma longitud y no repetir caracteres.');
