@@ -3,21 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CryptoSuite Pro</title>
+  <title>CryptoSuite Pro - UAA Edition</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="theme-dark">
   <div class="page-shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">SUITE DE ANÁLISIS</p>
+        <p class="eyebrow">INGENIERÍA EN SISTEMAS COMPUTACIONALES</p>
         <h1>CryptoSuite Pro</h1>
-        <p class="hero-copy">Herramienta de análisis criptográfico client-side. Módulos integrados de heurística clásica, gestión RSA y sustitución por alfabeto personalizado.</p>
+        <p class="hero-copy">Herramienta de análisis rápido para exámenes de ciberseguridad y auditoría. Procesamiento local zero-knowledge.</p>
       </div>
-      <div class="hero-badge">Offline Ready</div>
+      <div class="hero-badge">Examen Activo</div>
     </header>
 
     <main class="grid-layout">
+      <section class="card span-2 quick-decode-card accent-card">
+        <div class="section-title-row">
+          <div>
+            <p class="section-tag">00</p>
+            <h2>Decodificador Relámpago</h2>
+          </div>
+          <div id="quick-status" class="status-pill" data-state="neutral">Detectando...</div>
+        </div>
+        <div class="field-grid two">
+          <label class="field">
+            <span>Pegar cadena aquí (Cualquier formato)</span>
+            <textarea id="input-relampago" rows="3" placeholder="Ej: ⍲❈Ⓨ⋝┨... o Base64/Hex"></textarea>
+          </label>
+          <label class="field">
+            <span>Interpretación automática</span>
+            <textarea id="output-relampago" rows="3" placeholder="El resultado aparecerá aquí..." readonly></textarea>
+          </label>
+        </div>
+      </section>
+
       <section class="card span-2">
         <div class="section-title-row">
           <div>
@@ -55,7 +75,6 @@
           <input id="aes-password" type="password" placeholder="Passphrase" />
         </label>
         <button id="btn-descifrar-aes" class="btn-secondary full">Descifrar payload AES</button>
-        <p class="helper-text">Utilizar exclusivamente para descifrar estructuras JSON AES generadas por este sistema.</p>
       </section>
 
       <section class="card">
@@ -74,10 +93,6 @@
           <span>Llave privada</span>
           <textarea id="rsa-privada" rows="5" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
         </label>
-        <label class="field">
-          <span>Llave pública</span>
-          <textarea id="rsa-publica" rows="5" placeholder="-----BEGIN PUBLIC KEY-----"></textarea>
-        </label>
       </section>
 
       <section class="card span-2">
@@ -91,106 +106,36 @@
             <span>Mostrar todos</span>
           </label>
         </div>
-        <div class="section-meta">
-          <span id="contador-resultados">0 resultados</span>
-        </div>
         <div id="monitor-resultados" class="results-panel"></div>
       </section>
 
-      <section class="card span-2 accent-card">
+      <section class="card span-2">
         <div class="section-title-row">
           <div>
             <p class="section-tag">05</p>
             <h2>Sustitución personalizada</h2>
           </div>
         </div>
-        <p class="helper-text">Módulo bidireccional para mapeo de caracteres. Requiere la definición estricta de los conjuntos de símbolos de origen y destino.</p>
         <div class="field-grid two">
           <label class="field">
-            <span>Alfabeto origen (texto plano)</span>
-            <textarea id="alfabeto-origen" rows="5" placeholder="Ingresar alfabeto base"></textarea>
-            <small id="meta-origen">0 caracteres</small>
+            <span>Alfabeto origen</span>
+            <textarea id="alfabeto-origen" rows="5"></textarea>
           </label>
           <label class="field">
-            <span>Alfabeto destino (texto cifrado)</span>
-            <textarea id="alfabeto-destino" rows="5" placeholder="Ingresar alfabeto de sustitución"></textarea>
-            <small id="meta-destino">0 caracteres</small>
+            <span>Alfabeto destino</span>
+            <textarea id="alfabeto-destino" rows="5"></textarea>
           </label>
         </div>
         <div class="row-actions wrap">
-          <button id="btn-extraer-origen" class="btn-tertiary">Extraer únicos → origen</button>
-          <button id="btn-extraer-destino" class="btn-tertiary">Extraer únicos → destino</button>
-          <button id="btn-intercambiar" class="btn-tertiary">Intercambiar alfabetos</button>
+          <button id="btn-descifrar-personalizado" class="btn-primary">Descifrar</button>
         </div>
-        <div id="estado-mapeo" class="status-pill" data-state="neutral">Esperando configuración de alfabetos.</div>
-
         <div class="field-grid two">
-          <label class="field">
-            <span>Texto a procesar</span>
-            <textarea id="texto-sustitucion-entrada" rows="7" placeholder="Ingresar bloque de texto"></textarea>
-          </label>
-          <label class="field">
-            <span>Resultado</span>
-            <textarea id="texto-sustitucion-salida" rows="7" placeholder="Salida de la operación" readonly></textarea>
-          </label>
-        </div>
-        <div class="row-actions wrap">
-          <button id="btn-descifrar-personalizado" class="btn-primary">Descifrar destino → origen</button>
-          <button id="btn-cifrar-personalizado" class="btn-secondary">Cifrar origen → destino</button>
-          <button id="btn-copiar-sustitucion" class="btn-tertiary">Copiar resultado</button>
-          <button id="btn-enviar-editor" class="btn-tertiary">Enviar al editor</button>
-        </div>
-      </section>
-
-      <section id="modulo-salida" class="card span-2">
-        <div class="section-title-row">
-          <div>
-            <p class="section-tag">06</p>
-            <h2>Editor y exportación</h2>
-          </div>
-        </div>
-        <label class="field">
-          <span>Buffer de salida</span>
-          <textarea id="texto-base-salida" rows="8" placeholder="Buffer de texto procesado previo a la exportación"></textarea>
-        </label>
-        <div class="field-grid three">
-          <label class="field">
-            <span>Método de salida</span>
-            <select id="metodo-salida">
-              <option value="Base64">Base64</option>
-              <option value="Hexadecimal">Hexadecimal</option>
-              <option value="Binario">Binario</option>
-              <option value="Reverso">Reverso</option>
-              <option value="ROT13">ROT13</option>
-              <option value="Atbash">Atbash</option>
-              <option value="Cesar">César</option>
-              <option value="XOR">XOR</option>
-              <option value="AES">AES-GCM</option>
-            </select>
-          </label>
-          <label id="contenedor-clave-salida" class="field" hidden>
-            <span>Clave / shift</span>
-            <input id="clave-salida" type="text" placeholder="Clave o desplazamiento" />
-          </label>
-          <div class="field static-field">
-            <span>SHA-256 salida</span>
-            <strong id="hash-final">-</strong>
-          </div>
-        </div>
-        <label class="field">
-          <span>Contenedor cifrado exportable</span>
-          <textarea id="payload-final" rows="8" readonly></textarea>
-        </label>
-        <div class="row-actions wrap">
-          <button id="btn-copiar-final" class="btn-primary">Copiar</button>
-          <button id="btn-descargar-final" class="btn-secondary">Descargar</button>
+          <textarea id="texto-sustitucion-entrada" rows="7"></textarea>
+          <textarea id="texto-sustitucion-salida" rows="7" readonly></textarea>
         </div>
       </section>
     </main>
   </div>
-  
-  <div id="toast-container"></div>
-
   <script src="cipher.js"></script>
   <script src="app.js"></script>
 </body>
